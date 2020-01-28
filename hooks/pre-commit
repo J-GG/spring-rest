@@ -1,0 +1,84 @@
+#!/bin/bash
+
+###################
+# Pre-commit hook #
+###################
+
+HOOKS_DATA_PATH=".git/hooks-data"
+EXIT_SUCCESS=true
+
+# Checkstyle
+CHECKSTYLE_VERSION="checkstyle-8.28"
+CHECKSTYLE_BIN="$CHECKSTYLE_VERSION-all.jar"
+CHECKSTYLE_URL="https://github.com/checkstyle/checkstyle/releases/download/$CHECKSTYLE_VERSION/$CHECKSTYLE_BIN"
+CHECKSTYLE_CONF_FILE="checkstyle.xml"
+CHECKSTYLE_CONF_URL="https://raw.githubusercontent.com/J-GG/hooks/master/hooks-data/$CHECKSTYLE_CONF_FILE"
+
+# PMD
+PMD_VERSION="6.21.0"
+PMD_URL="https://github.com/pmd/pmd/releases/download/pmd_releases%2F$PMD_VERSION/pmd-bin-$PMD_VERSION.zip"
+PMD_ARCHIVE="pmd-bin-$PMD_VERSION.zip"
+PMD_BIN="pmd-bin-$PMD_VERSION/bin/run.sh"
+PMD_CONF_FILE="ruleset.xml"
+PMD_CACHE="pmd.cache"
+PMD_CONF_URL="https://raw.githubusercontent.com/J-GG/hooks/master/hooks-data/$PMD_CONF_FILE"
+
+function download {
+    if [ -f "$2" ]; then
+	return
+    fi
+    echo "$3"
+    if which curl > /dev/null; then
+	curl -Lk "$1" > "$2"
+    elif which wget > /dev/null; then
+	wget "$1" -O "$2"
+    else
+	echo "Unable to find a download backend to retrieve the files. Please install curl or wget."
+	exit 1
+    fi
+    echo
+}
+
+function inflateZip {
+    unzip -uq "$1/$2" -d "$1"
+}
+
+function main {
+    echo "================================"
+    echo "= Executing CheckStyle and PMD ="
+    echo "================================"
+    echo
+
+    mkdir -p .git/hooks-data
+
+    download "$CHECKSTYLE_URL" "$HOOKS_DATA_PATH/$CHECKSTYLE_BIN" "Downloading CheckStyle"
+    download "$CHECKSTYLE_CONF_URL" "$HOOKS_DATA_PATH/$HOOKS_DATA_PATH/$CHECKSTYLE_CONF_FILE" "Downloading CheckStyle configuration file"
+    download "$PMD_URL" "$HOOKS_DATA_PATH/$PMD_ARCHIVE" "Downloadind PMD Archive"
+    download "$PMD_CONF_URL" "$HOOKS_DATA_PATH/$PMD_CONF_FILE" "Downloadind PMD Ruleset"
+    inflateZip "$HOOKS_DATA_PATH" "$PMD_ARCHIVE"
+
+    echo "= CheckStyle ="
+    java -jar "$HOOKS_DATA_PATH/$CHECKSTYLE_BIN" -c "$HOOKS_DATA_PATH/$CHECKSTYLE_CONF" -x "toolbox[\\\/]form" $HOOKS_DATA_PATH/../../
+    if [ $? -ne 0 ]; then
+	    EXIT_SUCCESS=false
+    fi
+
+    echo "= PMD ="
+    java -classpath "$HOOKS_DATA_PATH/pmd-bin-$PMD_VERSION"'/lib/*' net.sourceforge.pmd.PMD -format text -rulesets "$HOOKS_DATA_PATH/$PMD_CONF_FILE" -dir src -cache $HOOKS_DATA_PATH/$PMD_CACHE
+    if [ $? -ne 0 ]; then
+	    EXIT_SUCCESS=false
+    fi
+}
+
+tty -s && stty -echo
+main
+tty -s && stty echo
+
+if $EXIT_SUCCESS; then
+    echo "No CheckStyle or PMD error"
+else
+    echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    echo "!  Can't commit. A CheckStyle or PMD error prevents it !"
+    echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    exit 1
+fi
