@@ -49,11 +49,13 @@ public class FilterSpecification<T> implements Specification<T> {
             } else if (this.filterCriteria.getOperator().equals(FilterOperatorEnum.LIKE)) {
                 return criteriaBuilder.like(root.get(this.filterCriteria.getField()), "%" + converter.apply(this.filterCriteria.getValue() + "%"));
             } else if (this.filterCriteria.getOperator().equals(FilterOperatorEnum.IN)) {
-                return criteriaBuilder.in(root.get(this.filterCriteria.getField()).in(Arrays.asList(this.filterCriteria.getValues())));
+                return criteriaBuilder.not(root.get(this.filterCriteria.getField()).in(Arrays.asList(this.filterCriteria.getValues()))).not();
+            } else if (this.filterCriteria.getOperator().equals(FilterOperatorEnum.NOT_IN)) {
+                return criteriaBuilder.not(root.get(this.filterCriteria.getField()).in(Arrays.asList(this.filterCriteria.getValues())));
             } else if (this.filterCriteria.getOperator().equals(FilterOperatorEnum.NULL) && !this.filterCriteria.getValue().equals("false")) {
-                return criteriaBuilder.in(root.get(this.filterCriteria.getField()).isNull());
+                return criteriaBuilder.isNull(root.get(this.filterCriteria.getField()));
             } else if (this.filterCriteria.getOperator().equals(FilterOperatorEnum.NULL) && this.filterCriteria.getValue().equals("false")) {
-                return criteriaBuilder.in(root.get(this.filterCriteria.getField()).isNotNull());
+                return criteriaBuilder.isNotNull(root.get(this.filterCriteria.getField()));
             }
         }
 

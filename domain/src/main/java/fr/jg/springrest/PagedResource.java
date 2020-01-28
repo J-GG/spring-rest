@@ -24,7 +24,7 @@ public class PagedResource<T> extends PartialResource<T> {
     private List<FilterCriteria> filters;
 
     private static final Pattern filterPattern = Pattern.compile(
-            String.format("(?<field>[a-zA-Z_]+):(?<operator>%s):((?<value>[0-9a-zA-Z-]+)|(?<values>\\([0-9a-zA-Z,]+\\)))",
+            String.format("(?<field>[a-zA-Z_]+):(?<operator>%s):((?<value>[0-9a-zA-Z-]+)|(?<values>\\([0-9a-zA-Z;]+\\)))",
                     Stream.of(FilterOperatorEnum.values()).map(FilterOperatorEnum::getOperator).collect(Collectors.joining("|")))
     );
 
@@ -119,7 +119,7 @@ public class PagedResource<T> extends PartialResource<T> {
                     .map(matcher -> {
                         String[] values = null;
                         if (matcher.group("values") != null) {
-                            values = matcher.group("values").substring(1, matcher.group("values").length() - 1).split(",");
+                            values = matcher.group("values").substring(1, matcher.group("values").length() - 1).split(";");
                         }
 
                         return new FilterCriteria(matcher.group("field"),
