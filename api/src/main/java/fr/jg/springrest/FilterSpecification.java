@@ -2,6 +2,7 @@ package fr.jg.springrest;
 
 import fr.jg.springrest.enumerations.FilterOperatorEnum;
 import fr.jg.springrest.exceptions.FilterConverterException;
+import fr.jg.springrest.exceptions.MalformedFilterException;
 import org.springframework.data.jpa.domain.Specification;
 
 import javax.persistence.criteria.CriteriaBuilder;
@@ -49,8 +50,14 @@ public class FilterSpecification<T> implements Specification<T> {
             } else if (this.filterCriteria.getOperator().equals(FilterOperatorEnum.LIKE)) {
                 return criteriaBuilder.like(root.get(this.filterCriteria.getField()), "%" + converter.apply(this.filterCriteria.getValue() + "%"));
             } else if (this.filterCriteria.getOperator().equals(FilterOperatorEnum.IN)) {
+                if (this.filterCriteria.getValues() == null) {
+                    throw new MalformedFilterException("The `ìn` filter expects an array such as key:in:(value1;value2)");
+                }
                 return criteriaBuilder.not(root.get(this.filterCriteria.getField()).in(Arrays.asList(this.filterCriteria.getValues()))).not();
             } else if (this.filterCriteria.getOperator().equals(FilterOperatorEnum.NOT_IN)) {
+                if (this.filterCriteria.getValues() == null) {
+                    throw new MalformedFilterException("The `not ìn` filter expects an array such as key:nin:(value1;value2)");
+                }
                 return criteriaBuilder.not(root.get(this.filterCriteria.getField()).in(Arrays.asList(this.filterCriteria.getValues())));
             } else if (this.filterCriteria.getOperator().equals(FilterOperatorEnum.NULL) && !this.filterCriteria.getValue().equals("false")) {
                 return criteriaBuilder.isNull(root.get(this.filterCriteria.getField()));
