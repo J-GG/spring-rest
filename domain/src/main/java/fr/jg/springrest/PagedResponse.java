@@ -1,6 +1,5 @@
 package fr.jg.springrest;
 
-
 import fr.jg.springrest.functional.PrunableFieldFilter;
 
 import java.util.HashMap;

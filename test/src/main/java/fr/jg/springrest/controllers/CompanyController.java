@@ -1,11 +1,11 @@
 package fr.jg.springrest.controllers;
 
-import fr.jg.springrest.JacksonPrunableFieldFilter;
 import fr.jg.springrest.PagedResource;
 import fr.jg.springrest.PagedResponse;
 import fr.jg.springrest.PartialResource;
 import fr.jg.springrest.dto.CompanyDto;
 import fr.jg.springrest.exceptions.CompanyNotFoundException;
+import fr.jg.springrest.functional.PrunableFieldFilter;
 import fr.jg.springrest.services.CompanyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -26,14 +26,14 @@ public class CompanyController {
     CompanyService companyService;
 
     @Autowired
-    JacksonPrunableFieldFilter jacksonPrunableFieldFilter;
+    PrunableFieldFilter prunableFieldFilter;
 
     @GetMapping("/{id}")
     public CompanyDto getCompany(final PartialResource<CompanyDto> partialResource, @PathVariable final UUID id) {
         final CompanyDto companyDto = this.companyService.getCompany(id)
                 .orElseThrow(() -> new CompanyNotFoundException(String.format("Company %s can't be found. Make sure the id is correct.", id)));
 
-        return partialResource.prune(companyDto, this.jacksonPrunableFieldFilter);
+        return partialResource.prune(companyDto, this.prunableFieldFilter);
     }
 
     @GetMapping
@@ -47,6 +47,6 @@ public class CompanyController {
         return ResponseEntity
                 .ok()
                 .headers(httpHeaders)
-                .body(pagedResponse.prune(this.jacksonPrunableFieldFilter));
+                .body(pagedResponse.prune(this.prunableFieldFilter));
     }
 }

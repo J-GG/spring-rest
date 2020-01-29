@@ -4,6 +4,8 @@ import fr.jg.springrest.*;
 import fr.jg.springrest.dto.CompanyDto;
 import fr.jg.springrest.entities.CompanyEntity;
 import fr.jg.springrest.enumerations.SortingOrderEnum;
+import fr.jg.springrest.functional.FilterableFieldFilter;
+import fr.jg.springrest.functional.SortableFieldFilter;
 import fr.jg.springrest.mappers.CompanyMapper;
 import fr.jg.springrest.repositories.CompanyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,10 +28,13 @@ public class CompanyServiceImpl implements CompanyService {
     private CompanyRepository companyRepository;
 
     @Autowired
-    private JacksonSortableFieldFilter jacksonSortableFieldFilter;
+    private SortableFieldFilter sortableFieldFilter;
 
     @Autowired
-    private JacksonFilterableFieldFilter jacksonFilterableFieldFilter;
+    private FilterableFieldFilter filterableFieldFilter;
+
+    @Autowired
+    private SpecificationDataAccess<CompanyDto, CompanyEntity, CompanyRepository, CompanyMapper> dataAccess;
 
     @Override
     public Optional<CompanyDto> getCompany(final UUID id) {
@@ -37,16 +42,17 @@ public class CompanyServiceImpl implements CompanyService {
         return companyEntity.map(CompanyMapper.INSTANCE::map);
     }
 
-
     @Override
     public PagedResponse<CompanyDto> getCompanies(final PagedResource<CompanyDto> pagedResource) {
+        final PagedResponse pagedResponse = this.dataAccess.get(pagedResource);
+
         Specification<CompanyEntity> specification = null;
-        for (final FilterCriteria filterCriteria : pagedResource.getFiltersForClass(CompanyDto.class, this.jacksonFilterableFieldFilter)) {
+        for (final FilterCriteria filterCriteria : pagedResource.getFiltersForClass(CompanyDto.class, this.filterableFieldFilter)) {
             final FilterSpecification<CompanyEntity> filterSpecification = new FilterSpecification<>(filterCriteria);
             specification = specification == null ? filterSpecification : specification.and(filterSpecification);
         }
 
-        final List<Sort.Order> orders = pagedResource.getSortForClass(CompanyDto.class, this.jacksonSortableFieldFilter)
+        final List<Sort.Order> orders = pagedResource.getSortForClass(CompanyDto.class, this.sortableFieldFilter)
                 .entrySet()
                 .stream()
                 .filter(entry -> Stream.of(CompanyDto.class.getDeclaredFields()).anyMatch(field -> {

@@ -1,6 +1,6 @@
 package fr.jg.springrest;
 
-
+import fr.jg.springrest.annotations.Pageable;
 import fr.jg.springrest.enumerations.FilterOperatorEnum;
 import fr.jg.springrest.enumerations.SortingOrderEnum;
 import fr.jg.springrest.functional.FilterableFieldFilter;
@@ -23,10 +23,10 @@ public class PagedResource<T> extends PartialResource<T> {
 
     private List<FilterCriteria> filters;
 
-    private static final Pattern filterPattern = Pattern.compile(
+    private static final Pattern FILTER_PATTERN = Pattern.compile(
             String.format("(?<field>[a-zA-Z_]+):(?<operator>%s):((?<value>[0-9a-zA-Z-]+)|(?<values>\\([0-9a-zA-Z;]+\\)))",
-                    Stream.of(FilterOperatorEnum.values()).map(FilterOperatorEnum::getOperator).collect(Collectors.joining("|")))
-    );
+                    Stream.of(FilterOperatorEnum.values()).map(FilterOperatorEnum::getOperator).collect(Collectors.joining("|"))
+            ));
 
     public PagedResource() {
         this.sort = new TreeMap<>();
@@ -72,6 +72,20 @@ public class PagedResource<T> extends PartialResource<T> {
             }
         }
 
+        for (final Field field : clazz.getDeclaredFields()) {
+            if (sortForClass.keySet().contains(field.getName())) {
+                final Pageable pageable = field.getAnnotation(Pageable.class);
+                if (pageable == null || !pageable.sortable()) {
+                    sortForClass.remove(field.getName());
+                } else {
+                    if (!pageable.value().isEmpty() && !pageable.value().equals(field.getName())) {
+                        sortForClass.put(pageable.value(), sortForClass.get(field.getName()));
+                        sortForClass.remove(field.getName());
+                    }
+                }
+            }
+        }
+
         return sortForClass;
     }
 
@@ -108,13 +122,32 @@ public class PagedResource<T> extends PartialResource<T> {
             }
         }
 
+        final List<FilterCriteria> filterCriteriaToBeRemoved = new ArrayList<>();
+        for (final Field field : clazz.getDeclaredFields()) {
+            filtersForClass
+                    .forEach(filterCriteria -> {
+                        if (filterCriteria.getField().equals(field.getName())) {
+                            final Pageable pageable = field.getAnnotation(Pageable.class);
+                            if (pageable == null || !pageable.filterable()) {
+                                filterCriteriaToBeRemoved.add(filterCriteria);
+                            } else {
+                                if (!pageable.value().isEmpty() && !pageable.value().equals(field.getName())) {
+                                    filterCriteria.setField(pageable.value());
+                                }
+                            }
+
+                        }
+                    });
+        }
+        filtersForClass.removeAll(filterCriteriaToBeRemoved);
+
         return filtersForClass;
     }
 
     public void setFilters(final String filters) {
         if (filters != null) {
             this.filters = Stream.of(filters.split(","))
-                    .map(filterPattern::matcher)
+                    .map(FILTER_PATTERN::matcher)
                     .filter(Matcher::matches)
                     .map(matcher -> {
                         String[] values = null;

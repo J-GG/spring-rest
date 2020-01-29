@@ -4,7 +4,7 @@ import fr.jg.springrest.enumerations.FilterOperatorEnum;
 
 public class FilterCriteria {
 
-    private final String field;
+    private String field;
 
     private final FilterOperatorEnum operator;
 
@@ -17,6 +17,10 @@ public class FilterCriteria {
         this.operator = operator;
         this.value = value;
         this.values = values;
+    }
+
+    public void setField(final String field) {
+        this.field = field;
     }
 
     public String getField() {

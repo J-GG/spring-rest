@@ -2,6 +2,7 @@ package fr.jg.springrest.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import fr.jg.springrest.annotations.Pageable;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -9,15 +10,20 @@ import java.util.UUID;
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 public class CompanyDto {
 
+    @Pageable
     private UUID id;
 
+    @Pageable
     private String name;
 
+    @Pageable
     private String siret;
 
+    @Pageable
     @JsonProperty("establishment_date")
     private LocalDate establishmentDate;
 
+    @Pageable
     @JsonProperty("total_employees")
     private Integer totalEmployees;
 

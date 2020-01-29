@@ -9,20 +9,20 @@ import java.util.UUID;
 import java.util.function.Function;
 
 public class FilterConverter {
-    private static final Map<Class<?>, Function<String, ? extends Comparable>> converters = new HashMap<>();
+    private static final Map<Class<?>, Function<String, ? extends Comparable>> CONVERTERS = new HashMap<>();
 
     static {
-        converters.put(String.class, s -> s);
-        converters.put(UUID.class, UUID::fromString);
-        converters.put(Long.class, Long::valueOf);
-        converters.put(Integer.class, Integer::valueOf);
-        converters.put(Double.class, Double::valueOf);
-        converters.put(Float.class, Float::valueOf);
-        converters.put(BigDecimal.class, BigDecimal::new);
-        converters.put(LocalDate.class, LocalDate::parse);
+        CONVERTERS.put(String.class, s -> s);
+        CONVERTERS.put(UUID.class, UUID::fromString);
+        CONVERTERS.put(Long.class, Long::valueOf);
+        CONVERTERS.put(Integer.class, Integer::valueOf);
+        CONVERTERS.put(Double.class, Double::valueOf);
+        CONVERTERS.put(Float.class, Float::valueOf);
+        CONVERTERS.put(BigDecimal.class, BigDecimal::new);
+        CONVERTERS.put(LocalDate.class, LocalDate::parse);
     }
 
     public static Optional<Function<String, ? extends Comparable>> getConverter(final Class<?> clazz) {
-        return Optional.ofNullable(FilterConverter.converters.get(clazz));
+        return Optional.ofNullable(FilterConverter.CONVERTERS.get(clazz));
     }
 }
