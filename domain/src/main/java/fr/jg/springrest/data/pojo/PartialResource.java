@@ -6,6 +6,8 @@ import fr.jg.springrest.data.services.PrunableFieldFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,11 +36,11 @@ public class PartialResource<T> {
                         try {
                             field.set(object, null);
                         } catch (final IllegalAccessException e) {
-                            throw new IllegalAccessPruningException(
-                                    String.format("The field %s could not be accessed on %s while trying to filter.",
-                                            field.getName(),
-                                            object.getClass().getName()
-                                    ), e);
+                            final IllegalAccessPruningException illegalAccessPruningException = new IllegalAccessPruningException(e, object.getClass(), field);
+                            Logger.getLogger("DataAccess").log(Level.SEVERE,
+                                    String.format("%s\nDetails: %s", illegalAccessPruningException.toString(), illegalAccessPruningException.getDetails())
+                            );
+                            throw illegalAccessPruningException;
                         }
                     });
         }

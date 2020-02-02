@@ -31,11 +31,11 @@ public class RestError {
         return this.response;
     }
 
-    public Map<String, Object> toMapAttributes() {
+    public Map<String, Object> toMapAttributes(final boolean includeDetails) {
         final Map<String, Object> map = new LinkedHashMap<>();
         map.put("timestamp", this.getTimestamp());
         map.put("request", this.request.toMapAttributes());
-        map.put("response", this.response.toMapAttributes());
+        map.put("response", this.response.toMapAttributes(includeDetails));
 
         return map;
     }

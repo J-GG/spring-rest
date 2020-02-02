@@ -38,7 +38,12 @@ public class SpringRestError {
     }
 
     public Map<String, Object> toMapAttributes() {
-        return this.restError.toMapAttributes();
+        return this.toMapAttributes(true);
+    }
+
+
+    public Map<String, Object> toMapAttributes(final boolean includeDetails) {
+        return this.restError.toMapAttributes(includeDetails);
     }
 
 }

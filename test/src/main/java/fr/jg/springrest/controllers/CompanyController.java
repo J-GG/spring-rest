@@ -1,11 +1,11 @@
 package fr.jg.springrest.controllers;
 
-import fr.jg.springrest.data.exceptions.ResourceNotFoundException;
 import fr.jg.springrest.data.pojo.PagedResource;
 import fr.jg.springrest.data.pojo.PagedResponse;
 import fr.jg.springrest.data.pojo.PartialResource;
 import fr.jg.springrest.data.services.PrunableFieldFilter;
 import fr.jg.springrest.dto.CompanyDto;
+import fr.jg.springrest.exceptions.ResourceNotFoundException;
 import fr.jg.springrest.services.CompanyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;

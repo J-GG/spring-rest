@@ -8,9 +8,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 public interface DataAccess<T, U, V, W> {
+
     PagedResponse<T> get(PagedResource<T> pagedResource, V repository, final FilterableFieldFilter filterableFieldFilter, SortableFieldFilter sortableFieldFilter);
 
     default Long getPage(final PagedResource<T> pagedResource) {
@@ -37,29 +40,50 @@ public interface DataAccess<T, U, V, W> {
             final W mapper = (W) Stream.of(mapperClass.getFields())
                     .filter(field -> field.getType().equals(mapperClass))
                     .findAny()
-                    .orElseThrow(() -> new NoMapperInstanceFoundException(String.format("No instance of the mapper %s could be found.", mapperClass)))
+                    .orElseThrow(() -> {
+                        NoMapperInstanceFoundException noMapperInstanceFoundException = new NoMapperInstanceFoundException(mapperClass);
+                        Logger.getLogger("DataAccess").log(Level.SEVERE,
+                                String.format("%s\nDetails: %s", noMapperInstanceFoundException.toString(), noMapperInstanceFoundException.getDetails())
+                        );
+                        return noMapperInstanceFoundException;
+                    })
                     .get(null);
 
             final Method mapMethod = Stream.of(mapperClass.getMethods())
                     .filter(method -> method.getReturnType().equals(domainClass))
                     .filter(method -> method.getParameterTypes() != null && method.getParameterCount() == 1 && method.getParameterTypes()[0].equals(entityClass))
                     .findAny()
-                    .orElseThrow(() -> new NoMapMethodFoundException(String.format("No method could be found to map from object %s to entity %s.", domainClass, entityClass)));
+                    .orElseThrow(() -> {
+                        final NoMapMethodFoundException noMapMethodFoundException = new NoMapMethodFoundException(mapperClass, domainClass, entityClass);
+                        Logger.getLogger("DataAccess").log(Level.SEVERE,
+                                String.format("%s\nDetails: %s", noMapMethodFoundException.toString(), noMapMethodFoundException.getDetails())
+                        );
+                        return noMapMethodFoundException;
+                    });
+
             resourceEntities.forEach(resource -> {
                 try {
                     resources.add((T) mapMethod.invoke(mapper, resource));
                 } catch (final IllegalAccessException e) {
-                    throw new MapperIllegalAccessException(
-                            String.format("Forbidden access to the %s map method in method while trying to map %s to %s.", mapperClass, entityClass, domainClass),
-                            e);
+                    final MapperIllegalAccessException mapperIllegalAccessException = new MapperIllegalAccessException(e, mapperClass, entityClass, domainClass, mapMethod);
+                    Logger.getLogger("DataAccess").log(Level.SEVERE,
+                            String.format("%s\nDetails: %s", mapperIllegalAccessException.toString(), mapperIllegalAccessException.getDetails())
+                    );
+                    throw mapperIllegalAccessException;
                 } catch (final InvocationTargetException e) {
-                    throw new MapInvocationTargetException(
-                            String.format("An exception occurred in the %s map method while mapping an object %s to %s.", mapperClass, entityClass, domainClass),
-                            e);
+                    final MapInvocationTargetException mapInvocationTargetException = new MapInvocationTargetException(e, mapperClass, entityClass, domainClass, mapMethod);
+                    Logger.getLogger("DataAccess").log(Level.SEVERE,
+                            String.format("%s\nDetails: %s", mapInvocationTargetException.toString(), mapInvocationTargetException.getDetails())
+                    );
+                    throw mapInvocationTargetException;
                 }
             });
         } catch (final IllegalAccessException e) {
-            throw new MapperIllegalAccessException(String.format("Forbidden access to the %s mapper.", mapperClass), e);
+            final MapperIllegalAccessException mapperIllegalAccessException = new MapperIllegalAccessException(e, mapperClass, entityClass, domainClass);
+            Logger.getLogger("DataAccess").log(Level.SEVERE,
+                    String.format("%s\nDetails: %s", mapperIllegalAccessException.toString(), mapperIllegalAccessException.getDetails())
+            );
+            throw mapperIllegalAccessException;
         }
 
         return resources;

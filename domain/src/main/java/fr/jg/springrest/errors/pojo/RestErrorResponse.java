@@ -105,15 +105,18 @@ public class RestErrorResponse {
     /**
      * Gets the response error block information as a map.
      *
+     * @param includeDetails whether more information should be added to the map or not. Useful to prevent the user from accessing sensitive data.
      * @return a map containing all of the information about the response error block
      */
-    public Map<String, Object> toMapAttributes() {
+    public Map<String, Object> toMapAttributes(final boolean includeDetails) {
         final Map<String, Object> map = new LinkedHashMap<>();
         map.put("http_code", this.getHttpCode().isPresent() ? this.httpCode : "No HTTP error code available");
         map.put("http_status", this.getHttpStatus().orElse("No HTTP status available"));
-        map.put("exception", this.getExeption().orElse("No exception available"));
-        map.put("message", this.getMessage().orElse("No message available"));
-        map.put("details", this.getDetails().orElse(new HashMap<>()));
+        if (includeDetails) {
+            map.put("exception", this.getExeption().orElse("No exception available"));
+            map.put("message", this.getMessage().orElse("No message available"));
+            map.put("details", this.getDetails().orElse(new HashMap<>()));
+        }
 
         return map;
     }
