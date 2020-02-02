@@ -1,11 +1,11 @@
 package fr.jg.springrest.controllers;
 
-import fr.jg.springrest.PagedResource;
-import fr.jg.springrest.PagedResponse;
-import fr.jg.springrest.PartialResource;
+import fr.jg.springrest.data.exceptions.ResourceNotFoundException;
+import fr.jg.springrest.data.pojo.PagedResource;
+import fr.jg.springrest.data.pojo.PagedResponse;
+import fr.jg.springrest.data.pojo.PartialResource;
+import fr.jg.springrest.data.services.PrunableFieldFilter;
 import fr.jg.springrest.dto.CompanyDto;
-import fr.jg.springrest.exceptions.CompanyNotFoundException;
-import fr.jg.springrest.functional.PrunableFieldFilter;
 import fr.jg.springrest.services.CompanyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -31,7 +31,7 @@ public class CompanyController {
     @GetMapping("/{id}")
     public CompanyDto getCompany(final PartialResource<CompanyDto> partialResource, @PathVariable final UUID id) {
         final CompanyDto companyDto = this.companyService.getCompany(id)
-                .orElseThrow(() -> new CompanyNotFoundException(String.format("Company %s can't be found. Make sure the id is correct.", id)));
+                .orElseThrow(() -> new ResourceNotFoundException("Company", id));
 
         return partialResource.prune(companyDto, this.prunableFieldFilter);
     }

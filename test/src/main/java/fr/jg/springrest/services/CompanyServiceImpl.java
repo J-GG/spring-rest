@@ -1,12 +1,12 @@
 package fr.jg.springrest.services;
 
-import fr.jg.springrest.PagedResource;
-import fr.jg.springrest.PagedResponse;
-import fr.jg.springrest.SpecificationDataAccess;
+import fr.jg.springrest.data.pojo.PagedResource;
+import fr.jg.springrest.data.pojo.PagedResponse;
+import fr.jg.springrest.data.services.FilterableFieldFilter;
+import fr.jg.springrest.data.services.SortableFieldFilter;
+import fr.jg.springrest.data.services.SpecificationDataAccess;
 import fr.jg.springrest.dto.CompanyDto;
 import fr.jg.springrest.entities.CompanyEntity;
-import fr.jg.springrest.functional.FilterableFieldFilter;
-import fr.jg.springrest.functional.SortableFieldFilter;
 import fr.jg.springrest.mappers.CompanyMapper;
 import fr.jg.springrest.repositories.CompanyRepository;
 import org.springframework.beans.factory.annotation.Autowired;

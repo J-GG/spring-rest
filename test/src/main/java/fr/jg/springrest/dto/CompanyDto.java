@@ -2,7 +2,7 @@ package fr.jg.springrest.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import fr.jg.springrest.annotations.Pageable;
+import fr.jg.springrest.data.annotations.Pageable;
 
 import java.time.LocalDate;
 import java.util.UUID;
