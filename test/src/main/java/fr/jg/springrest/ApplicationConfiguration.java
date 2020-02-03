@@ -14,6 +14,6 @@ public class ApplicationConfiguration {
 
     @Bean
     public ErrorAttributes errorAttributes() {
-        return new RestErrorAttributes(this.profile.equals("dev"));
+        return new RestErrorAttributes("dev".equals(this.profile));
     }
 }

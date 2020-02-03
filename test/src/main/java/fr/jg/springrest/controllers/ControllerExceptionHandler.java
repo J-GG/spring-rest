@@ -35,6 +35,6 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler( {ServerException.class})
     public final ResponseEntity<Map<String, Object>> handleServerException(final ServerException ex, final WebRequest webRequest) {
         final SpringRestError springRestError = new SpringRestError(HttpStatus.INTERNAL_SERVER_ERROR, webRequest, ex.getMessage(), ex.getClass().getSimpleName(), ex.getDetails());
-        return new ResponseEntity<>(springRestError.toMapAttributes(this.profile.equals("dev")), HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(springRestError.toMapAttributes("dev".equals(this.profile)), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

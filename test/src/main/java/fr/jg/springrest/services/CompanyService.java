@@ -12,4 +12,6 @@ public interface CompanyService {
     Optional<CompanyDto> getCompany(UUID id);
 
     PagedResponse<CompanyDto> getCompanies(PagedResource<CompanyDto> pagedResource);
+
+    Optional<CompanyDto> patchCompany(UUID id, CompanyDto companyDto);
 }

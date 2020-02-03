@@ -2,8 +2,6 @@ package fr.jg.springrest.services;
 
 import fr.jg.springrest.data.pojo.PagedResource;
 import fr.jg.springrest.data.pojo.PagedResponse;
-import fr.jg.springrest.data.services.FilterableFieldFilter;
-import fr.jg.springrest.data.services.SortableFieldFilter;
 import fr.jg.springrest.data.services.SpecificationDataAccess;
 import fr.jg.springrest.dto.CompanyDto;
 import fr.jg.springrest.entities.CompanyEntity;
@@ -16,16 +14,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-public class CompanyServiceImpl implements CompanyService, SpecificationDataAccess<CompanyDto, CompanyEntity, CompanyRepository, CompanyMapper> {
+public class CompanyServiceImpl extends SpecificationDataAccess<CompanyDto, CompanyEntity, CompanyRepository, CompanyMapper> implements CompanyService {
 
     @Autowired
     private CompanyRepository companyRepository;
-
-    @Autowired
-    private SortableFieldFilter sortableFieldFilter;
-
-    @Autowired
-    private FilterableFieldFilter filterableFieldFilter;
 
     @Override
     public Optional<CompanyDto> getCompany(final UUID id) {
@@ -35,6 +27,11 @@ public class CompanyServiceImpl implements CompanyService, SpecificationDataAcce
 
     @Override
     public PagedResponse<CompanyDto> getCompanies(final PagedResource<CompanyDto> pagedResource) {
-        return this.get(pagedResource, this.companyRepository, this.filterableFieldFilter, this.sortableFieldFilter);
+        return this.get(pagedResource);
+    }
+
+    @Override
+    public Optional<CompanyDto> patchCompany(final UUID id, final CompanyDto companyDto) {
+        return this.patch(id, companyDto);
     }
 }
