@@ -2,8 +2,10 @@ package fr.jg.springrest.data.services;
 
 import fr.jg.springrest.data.enumerations.SortingOrderEnum;
 import fr.jg.springrest.data.pojo.FilterCriteria;
-import fr.jg.springrest.data.pojo.PagedResource;
+import fr.jg.springrest.data.pojo.PagedQuery;
 import fr.jg.springrest.data.pojo.PagedResponse;
+import fr.jg.springrest.data.pojo.PutResponse;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -31,10 +33,7 @@ public class SpecificationDataAccess<T, U, V extends JpaSpecificationExecutor<U>
     private V repository;
 
     @Autowired
-    private FilterableFieldFilter filterableFieldFilter;
-
-    @Autowired
-    private SortableFieldFilter sortableFieldFilter;
+    private FieldFilter fieldFilter;
 
     public SpecificationDataAccess() {
         final Type[] types = ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments();
@@ -49,18 +48,18 @@ public class SpecificationDataAccess<T, U, V extends JpaSpecificationExecutor<U>
     }
 
     @Override
-    public PagedResponse<T> get(final PagedResource<T> pagedResource) {
-        final Long page = this.getPage(pagedResource);
-        final Long perPage = this.getPerPage(pagedResource);
+    public PagedResponse<T> get(final PagedQuery<T> pagedQuery) {
+        final Long page = this.getPage(pagedQuery);
+        final Long perPage = this.getPerPage(pagedQuery);
 
         Specification specification = null;
-        final List<FilterCriteria> filterCriterias = pagedResource.getFiltersForClass(this.domainClass, this.filterableFieldFilter);
+        final List<FilterCriteria> filterCriterias = pagedQuery.getFiltersForClass(this.domainClass, this.fieldFilter);
         for (final FilterCriteria filterCriteria : filterCriterias) {
             final SpecificationFilter specificationFilter = new SpecificationFilter<>(filterCriteria);
             specification = specification == null ? specificationFilter : specification.and(specificationFilter);
         }
 
-        final Map<String, SortingOrderEnum> sortMap = pagedResource.getSortForClass(this.domainClass, this.sortableFieldFilter);
+        final Map<String, SortingOrderEnum> sortMap = pagedQuery.getSortForClass(this.domainClass, this.fieldFilter);
         final List<Sort.Order> orders = sortMap
                 .entrySet()
                 .stream()
@@ -81,29 +80,22 @@ public class SpecificationDataAccess<T, U, V extends JpaSpecificationExecutor<U>
 
         final List<T> domainObjects = this.mapResources(entities.getContent(), this.entityClass, this.domainClass);
 
-        return new PagedResponse<>(pagedResource.getFields(), pagedResource.getSort(), pagedResource.getFilters(), page, perPage,
+        return new PagedResponse<>(pagedQuery.getSort(), pagedQuery.getFilters(), page, perPage,
                 (long) entities.getNumberOfElements(), (long) entities.getTotalPages(), entities.getTotalElements(), domainObjects);
     }
 
     @Override
     public Optional<T> patch(final UUID id, final T domainObject) {
+        Optional<T> resource = Optional.empty();
         final Optional<U> optionalEntity = this.repository.findById(id);
         if (optionalEntity.isPresent()) {
             final U entity = optionalEntity.get();
             final U mappedEntity = this.mapDomainObjectToEntity(domainObject, this.domainClass, this.entityClass);
 
             Arrays.stream(mappedEntity.getClass().getDeclaredFields())
-                    .filter(field -> {
-                        field.setAccessible(true);
-                        try {
-                            return field.get(mappedEntity) != null;
-                        } catch (IllegalAccessException e) {
-                            e.printStackTrace();
-                        }
-                        return false;
-                    })
                     .forEach(field -> {
                         try {
+                            field.setAccessible(true);
                             final String setter = "set" + field.getName().substring(0, 1).toUpperCase() + field.getName().substring(1);
                             entity.getClass().getMethod(setter, field.getType()).invoke(entity, field.get(mappedEntity));
                         } catch (final IllegalAccessException e) {
@@ -115,10 +107,18 @@ public class SpecificationDataAccess<T, U, V extends JpaSpecificationExecutor<U>
                         }
                     });
 
-            this.repository.save(entity);
-            return Optional.ofNullable(this.mapEntityToDomainObject(entity, this.entityClass, this.domainClass));
+            try {
+                resource = Optional.ofNullable(this.mapEntityToDomainObject(this.repository.save(entity), this.entityClass, this.domainClass));
+            } catch (final ConstraintViolationException e) {
+                e.printStackTrace();
+            }
         }
 
-        return Optional.empty();
+        return resource;
+    }
+
+    @Override
+    public PutResponse<T> put(final UUID id, final T domainObject) {
+        return null;
     }
 }

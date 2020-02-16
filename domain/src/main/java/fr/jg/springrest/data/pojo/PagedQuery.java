@@ -4,8 +4,7 @@ import fr.jg.springrest.data.annotations.Pageable;
 import fr.jg.springrest.data.enumerations.FilterOperatorEnum;
 import fr.jg.springrest.data.enumerations.FilterOperatorExpectedValue;
 import fr.jg.springrest.data.enumerations.SortingOrderEnum;
-import fr.jg.springrest.data.services.FilterableFieldFilter;
-import fr.jg.springrest.data.services.SortableFieldFilter;
+import fr.jg.springrest.data.services.FieldFilter;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -14,11 +13,11 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class PagedResource<T> extends PartialResource<T> {
+public class PagedQuery<T> {
 
     private Long page;
 
-    private Long per_page;
+    private Long perPage;
 
     private Map<String, SortingOrderEnum> sort;
 
@@ -30,15 +29,14 @@ public class PagedResource<T> extends PartialResource<T> {
                     FilterOperatorEnum.fromExpectedValue(FilterOperatorExpectedValue.ARRAY).stream().map(FilterOperatorEnum::getOperator).collect(Collectors.joining("|"))
             ));
 
-    public PagedResource() {
+    public PagedQuery() {
         this.sort = new LinkedHashMap<>();
         this.filters = new ArrayList<>();
     }
 
-    public PagedResource(final List<String> fields, final Long page, final Long perPage, final Map<String, SortingOrderEnum> sort, final List<FilterCriteria> filters) {
-        super(fields);
+    public PagedQuery(final Long page, final Long perPage, final Map<String, SortingOrderEnum> sort, final List<FilterCriteria> filters) {
         this.page = page;
-        this.per_page = perPage;
+        this.perPage = perPage;
         this.sort = sort;
         this.filters = filters;
     }
@@ -51,38 +49,28 @@ public class PagedResource<T> extends PartialResource<T> {
         this.page = page;
     }
 
-    public Optional<Long> getPer_page() {
-        return Optional.ofNullable(this.per_page);
+    public Optional<Long> getPerPage() {
+        return Optional.ofNullable(this.perPage);
     }
 
-    public void setPer_page(final Long per_page) {
-        this.per_page = per_page;
+    public void setPerPage(final Long perPage) {
+        this.perPage = perPage;
     }
 
     public Map<String, SortingOrderEnum> getSort() {
         return this.sort;
     }
 
-    public Map<String, SortingOrderEnum> getSortForClass(final Class<T> clazz, final SortableFieldFilter sortableFieldFilter) {
+    public Map<String, SortingOrderEnum> getSortForClass(final Class<T> clazz, final FieldFilter fieldFilter) {
         final Map<String, SortingOrderEnum> sortForClass = new LinkedHashMap<>();
 
         for (final Map.Entry<String, SortingOrderEnum> entry : this.sort.entrySet()) {
             for (final Field field : clazz.getDeclaredFields()) {
-                if (sortableFieldFilter.filter(entry.getKey(), field)) {
-                    sortForClass.put(field.getName(), entry.getValue());
-                }
-            }
-        }
-
-        for (final Field field : clazz.getDeclaredFields()) {
-            if (sortForClass.keySet().contains(field.getName())) {
-                final Pageable pageable = field.getAnnotation(Pageable.class);
-                if (pageable == null || !pageable.sortable()) {
-                    sortForClass.remove(field.getName());
-                } else {
-                    if (!pageable.value().isEmpty() && !pageable.value().equals(field.getName())) {
-                        sortForClass.put(pageable.value(), sortForClass.get(field.getName()));
-                        sortForClass.remove(field.getName());
+                if (fieldFilter.filter(entry.getKey(), field)) {
+                    final Pageable pageable = field.getAnnotation(Pageable.class);
+                    if (pageable != null && pageable.sortable()) {
+                        final String fieldName = !pageable.value().isEmpty() && !pageable.value().equals(field.getName()) ? pageable.value() : field.getName();
+                        sortForClass.put(fieldName, entry.getValue());
                     }
                 }
             }
@@ -113,35 +101,26 @@ public class PagedResource<T> extends PartialResource<T> {
         return this.filters;
     }
 
-    public List<FilterCriteria> getFiltersForClass(final Class<T> clazz, final FilterableFieldFilter filterableFieldFilter) {
+    public List<FilterCriteria> getFiltersForClass(final Class<T> clazz, final FieldFilter fieldFilter) {
         final List<FilterCriteria> filtersForClass = new ArrayList<>();
 
         for (final FilterCriteria filterCriteria : this.filters) {
             for (final Field field : clazz.getDeclaredFields()) {
-                if (filterableFieldFilter.filter(filterCriteria, field)) {
-                    filtersForClass.add(new FilterCriteria(field.getName(), filterCriteria.getOperator(), filterCriteria.getValue(), filterCriteria.getValues()));
+                if (fieldFilter.filter(filterCriteria.getExternalFieldName(), field)) {
+                    final Pageable pageable = field.getAnnotation(Pageable.class);
+                    if (pageable != null && pageable.filterable()) {
+                        final String internalFieldName = !pageable.value().isEmpty() && !pageable.value().equals(field.getName()) ? pageable.value() : field.getName();
+                        filtersForClass.add(new FilterCriteria(
+                                internalFieldName,
+                                filterCriteria.getExternalFieldName(),
+                                filterCriteria.getOperator(),
+                                filterCriteria.getValue(),
+                                filterCriteria.getValues())
+                        );
+                    }
                 }
             }
         }
-
-        final List<FilterCriteria> filterCriteriaToBeRemoved = new ArrayList<>();
-        for (final Field field : clazz.getDeclaredFields()) {
-            filtersForClass
-                    .forEach(filterCriteria -> {
-                        if (filterCriteria.getField().equals(field.getName())) {
-                            final Pageable pageable = field.getAnnotation(Pageable.class);
-                            if (pageable == null || !pageable.filterable()) {
-                                filterCriteriaToBeRemoved.add(filterCriteria);
-                            } else {
-                                if (!pageable.value().isEmpty() && !pageable.value().equals(field.getName())) {
-                                    filterCriteria.setField(pageable.value());
-                                }
-                            }
-
-                        }
-                    });
-        }
-        filtersForClass.removeAll(filterCriteriaToBeRemoved);
 
         return filtersForClass;
     }
@@ -151,10 +130,10 @@ public class PagedResource<T> extends PartialResource<T> {
             this.filters = Stream.of(filters.split(","))
                     .map(FILTER_PATTERN::matcher)
                     .filter(Matcher::matches)
-                    .map(matcher -> new FilterCriteria(matcher.group("field"),
-                            matcher.group("singleoperator") != null ?
-                                    FilterOperatorEnum.fromOperator(matcher.group("singleoperator")) :
-                                    FilterOperatorEnum.fromOperator(matcher.group("arrayoperator")),
+                    .map(matcher -> new FilterCriteria(matcher.group("field"), matcher.group("field"),
+                            matcher.group("singleoperator") != null
+                                    ? FilterOperatorEnum.fromOperator(matcher.group("singleoperator"))
+                                    : FilterOperatorEnum.fromOperator(matcher.group("arrayoperator")),
                             matcher.group("value"),
                             matcher.group("values") == null ? null : matcher.group("values").split(","))
                     ).collect(Collectors.toList());

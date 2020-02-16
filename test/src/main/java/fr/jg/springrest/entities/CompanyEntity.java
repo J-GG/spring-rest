@@ -3,9 +3,7 @@ package fr.jg.springrest.entities;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.GenericGenerator;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -25,6 +23,10 @@ public class CompanyEntity {
     private LocalDate establishmentDate;
 
     private Integer totalEmployees;
+
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "contact_id", nullable = false)
+    private ContactEntity contact;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -75,5 +77,13 @@ public class CompanyEntity {
 
     public void setCreatedAt(final LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public ContactEntity getContact() {
+        return this.contact;
+    }
+
+    public void setContact(final ContactEntity contact) {
+        this.contact = contact;
     }
 }

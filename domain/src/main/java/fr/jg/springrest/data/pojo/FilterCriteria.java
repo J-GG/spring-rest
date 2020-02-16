@@ -4,7 +4,9 @@ import fr.jg.springrest.data.enumerations.FilterOperatorEnum;
 
 public class FilterCriteria {
 
-    private String field;
+    private String internalFieldName;
+
+    private String externalFieldName;
 
     private final FilterOperatorEnum operator;
 
@@ -12,19 +14,28 @@ public class FilterCriteria {
 
     private final String[] values;
 
-    public FilterCriteria(final String field, final FilterOperatorEnum operator, final String value, final String[] values) {
-        this.field = field;
+    public FilterCriteria(final String internalFieldName, final String externalFieldName, final FilterOperatorEnum operator, final String value, final String[] values) {
+        this.internalFieldName = internalFieldName;
+        this.externalFieldName = externalFieldName;
         this.operator = operator;
         this.value = value;
         this.values = values;
     }
 
-    public void setField(final String field) {
-        this.field = field;
+    public void setInternalFieldName(final String internalFieldName) {
+        this.internalFieldName = internalFieldName;
     }
 
-    public String getField() {
-        return this.field;
+    public String getInternalFieldName() {
+        return this.internalFieldName;
+    }
+
+    public String getExternalFieldName() {
+        return this.externalFieldName;
+    }
+
+    public void setExternalFieldName(final String externalFieldName) {
+        this.externalFieldName = externalFieldName;
     }
 
     public FilterOperatorEnum getOperator() {

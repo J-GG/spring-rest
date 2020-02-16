@@ -1,6 +1,6 @@
 package fr.jg.springrest.services;
 
-import fr.jg.springrest.data.pojo.PagedResource;
+import fr.jg.springrest.data.pojo.PagedQuery;
 import fr.jg.springrest.data.pojo.PagedResponse;
 import fr.jg.springrest.data.services.SpecificationDataAccess;
 import fr.jg.springrest.dto.CompanyDto;
@@ -26,8 +26,8 @@ public class CompanyServiceImpl extends SpecificationDataAccess<CompanyDto, Comp
     }
 
     @Override
-    public PagedResponse<CompanyDto> getCompanies(final PagedResource<CompanyDto> pagedResource) {
-        return this.get(pagedResource);
+    public PagedResponse<CompanyDto> getCompanies(final PagedQuery<CompanyDto> pagedQuery) {
+        return this.get(pagedQuery);
     }
 
     @Override

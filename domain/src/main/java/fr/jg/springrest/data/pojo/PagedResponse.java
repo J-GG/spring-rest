@@ -1,14 +1,12 @@
 package fr.jg.springrest.data.pojo;
 
 import fr.jg.springrest.data.enumerations.SortingOrderEnum;
-import fr.jg.springrest.data.services.PrunableFieldFilter;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class PagedResponse<T> extends PagedResource<T> {
+public class PagedResponse<T> extends PagedQuery<T> {
 
     private Long size;
 
@@ -18,28 +16,13 @@ public class PagedResponse<T> extends PagedResource<T> {
 
     private List<T> resources;
 
-    public PagedResponse(final List<String> fields, final Map<String, SortingOrderEnum> sort, final List<FilterCriteria> filters, final Long page, final Long perPage,
+    public PagedResponse(final Map<String, SortingOrderEnum> sort, final List<FilterCriteria> filters, final Long page, final Long perPage,
                          final Long size, final Long totalPages, final Long totalResources, final List<T> resources) {
-        super(fields, page, perPage, sort, filters);
+        super(page, perPage, sort, filters);
         this.size = size;
         this.totalPages = totalPages;
         this.totalResources = totalResources;
         this.resources = resources;
-    }
-
-    public Map<String, String> getHeaders() {
-        final Map<String, String> headers = new HashMap<>();
-        headers.put("page", this.getPage().orElse(0L).toString());
-        headers.put("per_page", this.getPer_page().orElse(0L).toString());
-        headers.put("size", this.getSize().orElse(0L).toString());
-        headers.put("total_pages", this.getTotalPages().orElse(0L).toString());
-        headers.put("total_resources", this.getTotalResources().orElse(0L).toString());
-
-        return headers;
-    }
-
-    public List<T> prune(final PrunableFieldFilter pruneFieldsFilter) {
-        return super.prune(this.resources, pruneFieldsFilter);
     }
 
     public Optional<Long> getSize() {

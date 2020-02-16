@@ -6,13 +6,13 @@ import org.springframework.stereotype.Service;
 import java.lang.reflect.Field;
 
 @Service
-public class JacksonSortableFieldFilter implements SortableFieldFilter {
+public class JacksonSortableFieldFilter implements FieldFilter {
     @Override
-    public boolean filter(final String sort, final Field field) {
+    public boolean filter(final String fieldName, final Field field) {
         if (field.getAnnotation(JsonProperty.class) != null) {
-            return sort.equals(field.getAnnotation(JsonProperty.class).value());
+            return fieldName.equals(field.getAnnotation(JsonProperty.class).value());
         } else {
-            return sort.equals(field.getName());
+            return fieldName.equals(field.getName());
         }
     }
 }

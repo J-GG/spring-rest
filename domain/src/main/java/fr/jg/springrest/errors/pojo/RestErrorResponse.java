@@ -80,7 +80,7 @@ public class RestErrorResponse {
      *
      * @return the optional name
      */
-    public Optional<String> getExeption() {
+    public Optional<String> getException() {
         return Optional.ofNullable(this.exception);
     }
 
@@ -113,7 +113,7 @@ public class RestErrorResponse {
         map.put("http_code", this.getHttpCode().isPresent() ? this.httpCode : "No HTTP error code available");
         map.put("http_status", this.getHttpStatus().orElse("No HTTP status available"));
         if (includeDetails) {
-            map.put("exception", this.getExeption().orElse("No exception available"));
+            map.put("exception", this.getException().orElse("No exception available"));
             map.put("message", this.getMessage().orElse("No message available"));
             map.put("details", this.getDetails().orElse(new HashMap<>()));
         }

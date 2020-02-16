@@ -1,19 +1,22 @@
 package fr.jg.springrest.dto;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import fr.jg.springrest.data.annotations.Pageable;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.UUID;
 
-@JsonInclude(JsonInclude.Include.NON_ABSENT)
 public class CompanyDto {
 
     @Pageable
+    @NotNull
     private UUID id;
 
     @Pageable
+    @NotNull
     private String name;
 
     @Pageable
@@ -25,7 +28,13 @@ public class CompanyDto {
 
     @Pageable
     @JsonProperty("total_employees")
+    @Min(0)
     private Integer totalEmployees;
+
+    @Pageable
+    @NotNull
+    @Valid
+    private ContactDto contact;
 
     public UUID getId() {
         return this.id;
@@ -65,5 +74,13 @@ public class CompanyDto {
 
     public void setTotalEmployees(final Integer totalEmployees) {
         this.totalEmployees = totalEmployees;
+    }
+
+    public ContactDto getContact() {
+        return this.contact;
+    }
+
+    public void setContact(final ContactDto contact) {
+        this.contact = contact;
     }
 }

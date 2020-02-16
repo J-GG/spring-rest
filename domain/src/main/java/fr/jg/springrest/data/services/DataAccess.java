@@ -1,8 +1,9 @@
 package fr.jg.springrest.data.services;
 
 import fr.jg.springrest.data.exceptions.*;
-import fr.jg.springrest.data.pojo.PagedResource;
+import fr.jg.springrest.data.pojo.PagedQuery;
 import fr.jg.springrest.data.pojo.PagedResponse;
+import fr.jg.springrest.data.pojo.PutResponse;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -15,9 +16,11 @@ public abstract class DataAccess<T, U, V, W> {
 
     private W mapper;
 
-    public abstract PagedResponse<T> get(final PagedResource<T> pagedResource);
+    public abstract PagedResponse<T> get(final PagedQuery<T> pagedQuery);
 
     public abstract Optional<T> patch(final UUID id, final T domainObject);
+
+    public abstract PutResponse<T> put(final UUID id, final T domainObject);
 
     protected abstract Class<W> getMapperClass();
 
@@ -47,8 +50,8 @@ public abstract class DataAccess<T, U, V, W> {
         return this.mapper;
     }
 
-    protected Long getPage(final PagedResource<T> pagedResource) {
-        final Long page = pagedResource.getPage().orElse(0L);
+    protected Long getPage(final PagedQuery<T> pagedQuery) {
+        final Long page = pagedQuery.getPage().orElse(0L);
         if (page < 0) {
             throw new PagingException("page", page);
         }
@@ -56,8 +59,8 @@ public abstract class DataAccess<T, U, V, W> {
         return page;
     }
 
-    protected Long getPerPage(final PagedResource<T> pagedResource) {
-        final Long perPage = pagedResource.getPer_page().orElse((long) Integer.MAX_VALUE);
+    protected Long getPerPage(final PagedQuery<T> pagedQuery) {
+        final Long perPage = pagedQuery.getPerPage().orElse((long) Integer.MAX_VALUE);
         if (perPage < 0) {
             throw new PagingException("per_page", perPage);
         }
