@@ -19,7 +19,6 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class SpecificationDataAccess<T, U, V extends JpaSpecificationExecutor<U> & JpaRepository<U, UUID>, W> extends DataAccess<T, U, V, W> {
 
@@ -52,10 +51,10 @@ public class SpecificationDataAccess<T, U, V extends JpaSpecificationExecutor<U>
         final Long page = this.getPage(pagedQuery);
         final Long perPage = this.getPerPage(pagedQuery);
 
-        Specification specification = null;
+        Specification<U> specification = null;
         final List<FilterCriteria> filterCriterias = pagedQuery.getFiltersForClass(this.domainClass, this.fieldFilter);
         for (final FilterCriteria filterCriteria : filterCriterias) {
-            final SpecificationFilter specificationFilter = new SpecificationFilter<>(filterCriteria);
+            final SpecificationFilter<U> specificationFilter = new SpecificationFilter<>(filterCriteria);
             specification = specification == null ? specificationFilter : specification.and(specificationFilter);
         }
 
@@ -63,10 +62,6 @@ public class SpecificationDataAccess<T, U, V extends JpaSpecificationExecutor<U>
         final List<Sort.Order> orders = sortMap
                 .entrySet()
                 .stream()
-                .filter(entry -> Stream.of(this.entityClass.getDeclaredFields()).anyMatch(field -> {
-                    field.setAccessible(true);
-                    return field.getName().equals(entry.getKey());
-                }))
                 .map(entry -> {
                     if (entry.getValue().equals(SortingOrderEnum.ASCENDING)) {
                         return Sort.Order.asc(entry.getKey());
@@ -76,7 +71,7 @@ public class SpecificationDataAccess<T, U, V extends JpaSpecificationExecutor<U>
                 }).collect(Collectors.toList());
 
         final PageRequest pageRequest = PageRequest.of(Math.toIntExact(page), Math.toIntExact(perPage), Sort.by(orders));
-        final Page entities = this.repository.findAll(specification, pageRequest);
+        final Page<U> entities = this.repository.findAll(specification, pageRequest);
 
         final List<T> domainObjects = this.mapResources(entities.getContent(), this.entityClass, this.domainClass);
 

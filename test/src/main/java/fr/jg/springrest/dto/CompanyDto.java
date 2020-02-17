@@ -36,6 +36,10 @@ public class CompanyDto {
     @Valid
     private ContactDto contact;
 
+    @JsonProperty("contact_id")
+    @Pageable("contact.id")
+    private UUID contactId;
+
     public UUID getId() {
         return this.id;
     }
@@ -82,5 +86,13 @@ public class CompanyDto {
 
     public void setContact(final ContactDto contact) {
         this.contact = contact;
+    }
+
+    public UUID getContactId() {
+        return this.contactId;
+    }
+
+    public void setContactId(final UUID contactId) {
+        this.contactId = contactId;
     }
 }

@@ -21,6 +21,9 @@ public class ContactDto {
     @JsonProperty("last_name")
     private String lastName;
 
+    @Pageable
+    private AddressDto address;
+
     public UUID getId() {
         return this.id;
     }
@@ -43,5 +46,13 @@ public class ContactDto {
 
     public void setLastName(final String lastName) {
         this.lastName = lastName;
+    }
+
+    public AddressDto getAddress() {
+        return this.address;
+    }
+
+    public void setAddress(final AddressDto address) {
+        this.address = address;
     }
 }
