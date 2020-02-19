@@ -1,7 +1,8 @@
 package fr.jg.springrest.data.services;
 
+import fr.jg.springrest.data.enumerations.FilterOperatorEnum;
 import fr.jg.springrest.data.enumerations.SortingOrderEnum;
-import fr.jg.springrest.data.pojo.FilterCriteria;
+import fr.jg.springrest.data.pojo.FilterCriterion;
 import fr.jg.springrest.data.pojo.PagedQuery;
 import fr.jg.springrest.data.pojo.PagedResponse;
 import fr.jg.springrest.data.pojo.PutResponse;
@@ -20,20 +21,46 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * An implementation of the {@link DataAccess} with {@link Specification}.
+ *
+ * @param <T> The domain object.
+ * @param <U> The entity.
+ * @param <V> The repository.
+ * @param <W> The mapper.
+ */
 public class SpecificationDataAccess<T, U, V extends JpaSpecificationExecutor<U> & JpaRepository<U, UUID>, W> extends DataAccess<T, U, V, W> {
 
+    /**
+     * The class of the domain object.
+     */
     private final Class<T> domainClass;
 
+    /**
+     * The class of the entity.
+     */
     private final Class<U> entityClass;
 
+    /**
+     * The class of the mapper.
+     */
     private final Class<W> mapperClass;
 
+    /**
+     * The repository.
+     */
     @Autowired
     private V repository;
 
+    /**
+     * The field filter.
+     */
     @Autowired
     private FieldFilter fieldFilter;
 
+    /**
+     * Constructor.
+     */
     public SpecificationDataAccess() {
         final Type[] types = ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments();
         this.domainClass = (Class) types[0];
@@ -52,11 +79,12 @@ public class SpecificationDataAccess<T, U, V extends JpaSpecificationExecutor<U>
         final Long perPage = this.getPerPage(pagedQuery);
 
         Specification<U> specification = null;
-        final List<FilterCriteria> filterCriterias = pagedQuery.getFiltersForClass(this.domainClass, this.fieldFilter);
-        for (final FilterCriteria filterCriteria : filterCriterias) {
-            final SpecificationFilter<U> specificationFilter = new SpecificationFilter<>(filterCriteria);
+        final List<FilterCriterion> filterCriterias = pagedQuery.getFiltersForClass(this.domainClass, this.fieldFilter);
+        for (final FilterCriterion filterCriterion : filterCriterias) {
+            final SpecificationFilter<U> specificationFilter = new SpecificationFilter<>(filterCriterion);
             specification = specification == null ? specificationFilter : specification.and(specificationFilter);
         }
+        specification = specification.and(new SpecificationFilter<>(new FilterCriterion("id", "id", FilterOperatorEnum.EQUAL, "567611e8-5c5e-4d91-84cf-a453cb691f78", null)));
 
         final Map<String, SortingOrderEnum> sortMap = pagedQuery.getSortForClass(this.domainClass, this.fieldFilter);
         final List<Sort.Order> orders = sortMap

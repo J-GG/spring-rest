@@ -19,7 +19,6 @@ import java.util.stream.Stream;
  * @param <T> The resource sent back to the client.
  */
 public class PagedQuery<T> {
-
     /**
      * The page number.
      */
@@ -36,9 +35,9 @@ public class PagedQuery<T> {
     private Map<String, SortingOrderEnum> sort;
 
     /**
-     * The list of filters to filter the list of resources.
+     * The list of filter criteria to filter the list of resources.
      */
-    private List<FilterCriteria> filters;
+    private List<FilterCriterion> filters;
 
     /**
      * The regex to split the filters on comma not within parenthesis.
@@ -49,9 +48,9 @@ public class PagedQuery<T> {
      * The regex to extract the information about the filter from the URL (ex. field:eq:value or field:in:(val1,val2)).
      */
     private static final Pattern FILTER_PATTERN = Pattern.compile(
-            String.format("(?<field>[a-zA-Z_\\.]+):(?:(?:(?<singleoperator>%s):(?<value>[0-9a-zA-ZÀ-ÿ-]+))|(?:(?<arrayoperator>%s):\\((?<values>[0-9a-zA-ZÀ-ÿ,]+)\\)))",
+            String.format("(?<field>[a-zA-Z_\\.]+):(?:(?:(?<singleoperator>%s):(?<value>[0-9a-zA-ZÀ-ÿ-]+))|(?:(?<arrayoperator>%s):\\((?<values>[0-9a-zA-ZÀ-ÿ-,]+)\\)))",
                     FilterOperatorEnum.fromExpectedValue(FilterOperatorExpectedValue.SINGLE).stream().map(FilterOperatorEnum::getOperator).collect(Collectors.joining("|")),
-                    FilterOperatorEnum.fromExpectedValue(FilterOperatorExpectedValue.ARRAY).stream().map(FilterOperatorEnum::getOperator).collect(Collectors.joining("|"))
+                    FilterOperatorEnum.fromExpectedValue(FilterOperatorExpectedValue.MULTIPLE).stream().map(FilterOperatorEnum::getOperator).collect(Collectors.joining("|"))
             ));
 
     /**
@@ -70,7 +69,7 @@ public class PagedQuery<T> {
      * @param sort    The map of fields based on which the resources should be sorted out.
      * @param filters The list of filters to filter the list of resources.
      */
-    public PagedQuery(final Long page, final Long perPage, final Map<String, SortingOrderEnum> sort, final List<FilterCriteria> filters) {
+    public PagedQuery(final Long page, final Long perPage, final Map<String, SortingOrderEnum> sort, final List<FilterCriterion> filters) {
         this.page = page;
         this.perPage = perPage;
         this.sort = sort;
@@ -222,7 +221,7 @@ public class PagedQuery<T> {
      *
      * @return The list of filters to filter the list of resources.
      */
-    public List<FilterCriteria> getFilters() {
+    public List<FilterCriterion> getFilters() {
         return this.filters;
     }
 
@@ -235,14 +234,14 @@ public class PagedQuery<T> {
      * @param fieldFilter The filter to determine whether the clazz contains a given field.
      * @return The list of filter criteria based on which resources should be filtered.
      */
-    public List<FilterCriteria> getFiltersForClass(final Class<T> clazz, final FieldFilter fieldFilter) {
-        final List<FilterCriteria> filtersForClass = new ArrayList<>();
+    public List<FilterCriterion> getFiltersForClass(final Class<T> clazz, final FieldFilter fieldFilter) {
+        final List<FilterCriterion> filtersForClass = new ArrayList<>();
 
-        for (final FilterCriteria filterCriteria : this.filters) {
-            final List<String> fieldPath = Arrays.asList(filterCriteria.getExternalFieldName().split("\\."));
+        for (final FilterCriterion filterCriterion : this.filters) {
+            final List<String> fieldPath = Arrays.asList(filterCriterion.getExternalFieldName().split("\\."));
             PagedQuery.getFullFieldName(false, fieldPath, clazz, fieldFilter).ifPresent(fullFieldName -> {
-                filterCriteria.setInternalFieldName(fullFieldName);
-                filtersForClass.add(filterCriteria);
+                filterCriterion.setInternalFieldName(fullFieldName);
+                filtersForClass.add(filterCriterion);
             });
         }
 
@@ -259,10 +258,10 @@ public class PagedQuery<T> {
             this.filters = Stream.of(filters.split(SPLIT_REGEX))
                     .map(FILTER_PATTERN::matcher)
                     .filter(Matcher::matches)
-                    .map(matcher -> new FilterCriteria(matcher.group("field"), matcher.group("field"),
+                    .map(matcher -> new FilterCriterion(matcher.group("field"), matcher.group("field"),
                             matcher.group("singleoperator") != null
-                                    ? FilterOperatorEnum.fromOperator(matcher.group("singleoperator"))
-                                    : FilterOperatorEnum.fromOperator(matcher.group("arrayoperator")),
+                                    ? FilterOperatorEnum.fromOperator(matcher.group("singleoperator")).orElse(null)
+                                    : FilterOperatorEnum.fromOperator(matcher.group("arrayoperator")).orElse(null),
                             matcher.group("value"),
                             matcher.group("values") == null ? null : matcher.group("values").split(","))
                     ).collect(Collectors.toList());

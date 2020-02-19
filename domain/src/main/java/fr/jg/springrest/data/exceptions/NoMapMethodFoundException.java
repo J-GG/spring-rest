@@ -1,5 +1,7 @@
 package fr.jg.springrest.data.exceptions;
 
+import fr.jg.springrest.errors.pojo.ServerException;
+
 public class NoMapMethodFoundException extends ServerException {
 
     public NoMapMethodFoundException(final Class mapperClass, final Class sourceClass, final Class targetClass) {

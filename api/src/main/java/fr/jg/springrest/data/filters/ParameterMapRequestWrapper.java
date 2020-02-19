@@ -1,4 +1,4 @@
-package fr.jg.springrest.data.services;
+package fr.jg.springrest.data.filters;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
@@ -7,6 +7,9 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * Class allowing to adapt the request parameters of a query.
+ */
 public class ParameterMapRequestWrapper extends HttpServletRequestWrapper {
 
     private final Map<String, String[]> modifiableParameters;

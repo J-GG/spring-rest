@@ -1,4 +1,4 @@
-package fr.jg.springrest.data.services;
+package fr.jg.springrest.data.filters;
 
 import org.springframework.stereotype.Component;
 

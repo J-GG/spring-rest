@@ -1,5 +1,7 @@
 package fr.jg.springrest.data.exceptions;
 
+import fr.jg.springrest.errors.pojo.ServerException;
+
 public class NoMapperInstanceFoundException extends ServerException {
 
     public NoMapperInstanceFoundException(final Class mapperClass) {

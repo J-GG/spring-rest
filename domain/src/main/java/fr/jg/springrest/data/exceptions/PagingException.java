@@ -1,5 +1,7 @@
 package fr.jg.springrest.data.exceptions;
 
+import fr.jg.springrest.errors.pojo.DetailedException;
+
 public class PagingException extends DetailedException {
 
     public PagingException(final String parameter, final Long value) {

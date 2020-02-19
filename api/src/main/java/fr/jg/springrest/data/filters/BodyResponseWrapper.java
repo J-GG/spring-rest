@@ -1,4 +1,4 @@
-package fr.jg.springrest.data.services;
+package fr.jg.springrest.data.filters;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.WriteListener;
@@ -7,6 +7,9 @@ import javax.servlet.http.HttpServletResponseWrapper;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+/**
+ * Class allowing to adapt the response body.
+ */
 public class BodyResponseWrapper extends HttpServletResponseWrapper {
 
     private final ByteArrayOutputStream capture;

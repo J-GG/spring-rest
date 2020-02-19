@@ -32,6 +32,10 @@ public class CompanyDto {
     private Integer totalEmployees;
 
     @Pageable
+    @JsonProperty("run")
+    private Boolean isRun;
+
+    @Pageable
     @NotNull
     @Valid
     private ContactDto contact;
@@ -94,5 +98,13 @@ public class CompanyDto {
 
     public void setContactId(final UUID contactId) {
         this.contactId = contactId;
+    }
+
+    public Boolean isRun() {
+        return this.isRun;
+    }
+
+    public void setRun(final Boolean run) {
+        this.isRun = run;
     }
 }

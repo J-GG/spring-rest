@@ -24,6 +24,8 @@ public class CompanyEntity {
 
     private Integer totalEmployees;
 
+    private Boolean isRun;
+
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "contact_id", nullable = false)
     private ContactEntity contact;
@@ -85,5 +87,13 @@ public class CompanyEntity {
 
     public void setContact(final ContactEntity contact) {
         this.contact = contact;
+    }
+
+    public Boolean isRun() {
+        return this.isRun;
+    }
+
+    public void setRun(final Boolean run) {
+        this.isRun = run;
     }
 }

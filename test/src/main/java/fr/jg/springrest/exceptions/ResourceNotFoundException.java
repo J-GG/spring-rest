@@ -1,6 +1,6 @@
 package fr.jg.springrest.exceptions;
 
-import fr.jg.springrest.data.exceptions.DetailedException;
+import fr.jg.springrest.errors.pojo.DetailedException;
 
 import java.util.UUID;
 

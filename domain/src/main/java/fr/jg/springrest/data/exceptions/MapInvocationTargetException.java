@@ -1,5 +1,7 @@
 package fr.jg.springrest.data.exceptions;
 
+import fr.jg.springrest.errors.pojo.ServerException;
+
 import java.lang.reflect.Method;
 import java.util.Arrays;
 

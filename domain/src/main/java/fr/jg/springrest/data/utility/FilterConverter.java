@@ -1,4 +1,4 @@
-package fr.jg.springrest.data.toolbox;
+package fr.jg.springrest.data.utility;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -8,8 +8,14 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 
+/**
+ * A utility class providing a generic way to get a function to convert a {@link String} into an instance of a provided class.
+ */
 public class FilterConverter {
-    private static final Map<Class<?>, Function<String, ? extends Comparable>> CONVERTERS = new HashMap<>();
+    /**
+     * Map associating a class with a method converting a {@link String} value to an instance of this class.
+     */
+    private static final Map<Class<?>, Function<String, ? extends Comparable<?>>> CONVERTERS = new HashMap<>();
 
     static {
         CONVERTERS.put(String.class, s -> s);
@@ -23,7 +29,13 @@ public class FilterConverter {
         CONVERTERS.put(LocalDate.class, LocalDate::parse);
     }
 
-    public static Optional<Function<String, ? extends Comparable>> getConverter(final Class<?> clazz) {
+    /**
+     * Gets an optional function to convert a {@link String} into the provided class.
+     *
+     * @param clazz The class to convert a {@link String} into.
+     * @return A function to convert a {@link String} into the provided class.
+     */
+    public static Optional<Function<String, ? extends Comparable<?>>> getConverter(final Class<?> clazz) {
         return Optional.ofNullable(FilterConverter.CONVERTERS.get(clazz));
     }
 }

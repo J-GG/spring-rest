@@ -1,10 +1,9 @@
-package fr.jg.springrest.data.services;
+package fr.jg.springrest.errors;
 
-import fr.jg.springrest.data.exceptions.DetailedException;
 import fr.jg.springrest.data.exceptions.InvalidParameterType;
 import fr.jg.springrest.data.exceptions.PagingException;
-import fr.jg.springrest.data.exceptions.ServerException;
-import fr.jg.springrest.errors.SpringRestError;
+import fr.jg.springrest.errors.pojo.DetailedException;
+import fr.jg.springrest.errors.pojo.ServerException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

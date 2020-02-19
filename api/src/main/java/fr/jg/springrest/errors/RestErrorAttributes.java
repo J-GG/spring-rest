@@ -1,6 +1,6 @@
 package fr.jg.springrest.errors;
 
-import fr.jg.springrest.data.exceptions.ServerException;
+import fr.jg.springrest.errors.pojo.ServerException;
 import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
 import org.springframework.web.context.request.WebRequest;
 

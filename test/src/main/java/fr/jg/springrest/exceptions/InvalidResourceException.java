@@ -1,7 +1,7 @@
 package fr.jg.springrest.exceptions;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import fr.jg.springrest.data.exceptions.DetailedException;
+import fr.jg.springrest.errors.pojo.DetailedException;
 
 import javax.validation.ConstraintViolation;
 import java.lang.annotation.Annotation;

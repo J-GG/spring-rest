@@ -1,7 +1,8 @@
-package fr.jg.springrest.data.services;
+package fr.jg.springrest.data.filters;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.MissingNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.stereotype.Component;
 
@@ -40,9 +41,9 @@ public class JsonFieldsFilter implements Filter {
                 });
 
                 fieldTree.asMap().forEach((parentPath, fieldNames) -> StreamSupport.stream(root.spliterator(), false)
-                        .forEach(jsonNode -> {
-                            final JsonNode parentNode = jsonNode.at(parentPath);
-                            if (!parentNode.isEmpty()) {
+                        .forEach(jsonResourceNode -> {
+                            final JsonNode parentNode = jsonResourceNode.at(parentPath);
+                            if (!(parentNode instanceof MissingNode)) {
                                 ((ObjectNode) parentNode).retain(fieldNames);
                             }
                         }));
@@ -53,20 +54,46 @@ public class JsonFieldsFilter implements Filter {
         }
     }
 
-    public class FieldNode {
+    /**
+     * Used to represent the fields path as a tree.
+     * Each node is a field of a class.
+     */
+    public static class FieldNode {
 
+        /**
+         * The parent of the node.
+         * <p>
+         * It contains the full path to this node. Each field/level being separated by /.
+         */
         private final String parent;
 
+        /**
+         * Name of the field.
+         */
         private final String name;
 
+        /**
+         * The list of child nodes.
+         */
         private final Set<FieldNode> children;
 
+        /**
+         * Constructor.
+         *
+         * @param parent The parent of the node.
+         * @param name   The name of the field.
+         */
         public FieldNode(final String parent, final String name) {
             this.parent = parent;
             this.name = name;
             this.children = new HashSet<>();
         }
 
+        /**
+         * Adds recursively the fields contained in the path to the children.
+         *
+         * @param path The path to parse.
+         */
         public void parse(final List<String> path) {
             if (path != null && !path.isEmpty()) {
                 this.children.stream()
@@ -80,6 +107,11 @@ public class JsonFieldsFilter implements Filter {
             }
         }
 
+        /**
+         * Converts the object as a Map containing the full path as a key and the list of children names as values.
+         *
+         * @return A map.
+         */
         public Map<String, List<String>> asMap() {
             final Map<String, List<String>> map = new HashMap<>();
             map.put(this.parent.concat(this.name), this.children.stream().map(FieldNode::getName).collect(Collectors.toList()));
@@ -88,6 +120,11 @@ public class JsonFieldsFilter implements Filter {
             return map;
         }
 
+        /**
+         * Gets the name of the field.
+         *
+         * @return The name of the field.
+         */
         public String getName() {
             return this.name;
         }

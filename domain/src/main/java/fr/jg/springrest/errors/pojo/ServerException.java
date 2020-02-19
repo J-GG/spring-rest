@@ -1,4 +1,4 @@
-package fr.jg.springrest.data.exceptions;
+package fr.jg.springrest.errors.pojo;
 
 public class ServerException extends DetailedException {
 

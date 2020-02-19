@@ -11,6 +11,9 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
 import java.util.Collections;
 
+/**
+ * A ControllerAdvice intercepting the response of controllers returning {@link PagedResponse} in order to add custom headers.
+ */
 @ControllerAdvice
 public class PagedResponseControllerAdvice implements ResponseBodyAdvice<Object> {
 
@@ -22,7 +25,7 @@ public class PagedResponseControllerAdvice implements ResponseBodyAdvice<Object>
     @Override
     public Object beforeBodyWrite(final Object body, final MethodParameter returnType, final MediaType selectedContentType,
                                   final Class<? extends HttpMessageConverter<?>> selectedConverterType, final ServerHttpRequest request, final ServerHttpResponse response) {
-        final PagedResponse pagedResponse = (PagedResponse) body;
+        final PagedResponse<?> pagedResponse = (PagedResponse<?>) body;
         response.getHeaders().put("page", Collections.singletonList(pagedResponse.getPage().orElse(0L).toString()));
         response.getHeaders().put("per_page", Collections.singletonList(pagedResponse.getPerPage().orElse(0L).toString()));
         response.getHeaders().put("size", Collections.singletonList(pagedResponse.getSize().orElse(0L).toString()));
