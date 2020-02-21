@@ -2,10 +2,7 @@ package fr.jg.springrest.data.utility;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -27,6 +24,8 @@ public class FilterConverter {
         CONVERTERS.put(Boolean.class, Boolean::parseBoolean);
         CONVERTERS.put(BigDecimal.class, BigDecimal::new);
         CONVERTERS.put(LocalDate.class, LocalDate::parse);
+        CONVERTERS.put(List.class, s -> s);
+        CONVERTERS.put(Set.class, s -> s);
     }
 
     /**

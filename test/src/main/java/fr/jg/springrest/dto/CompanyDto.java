@@ -7,6 +7,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 public class CompanyDto {
@@ -38,11 +39,7 @@ public class CompanyDto {
     @Pageable
     @NotNull
     @Valid
-    private ContactDto contact;
-
-    @JsonProperty("contact_id")
-    @Pageable("contact.id")
-    private UUID contactId;
+    private List<ContactDto> contacts;
 
     public UUID getId() {
         return this.id;
@@ -84,20 +81,12 @@ public class CompanyDto {
         this.totalEmployees = totalEmployees;
     }
 
-    public ContactDto getContact() {
-        return this.contact;
+    public List<ContactDto> getContacts() {
+        return this.contacts;
     }
 
-    public void setContact(final ContactDto contact) {
-        this.contact = contact;
-    }
-
-    public UUID getContactId() {
-        return this.contactId;
-    }
-
-    public void setContactId(final UUID contactId) {
-        this.contactId = contactId;
+    public void setContacts(final List<ContactDto> contacts) {
+        this.contacts = contacts;
     }
 
     public Boolean isRun() {

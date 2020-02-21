@@ -7,6 +7,7 @@ import fr.jg.springrest.data.enumerations.SortingOrderEnum;
 import fr.jg.springrest.data.services.FieldFilter;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -177,7 +178,8 @@ public class PagedQuery<T> {
         }
 
         if (path.size() > 1) {
-            final Optional<String> childFieldName = getFullFieldName(isSortSearch, path.subList(1, path.size()), field.getType(), fieldFilter);
+            final Class<?> childClazz = Collection.class.isAssignableFrom(field.getType()) ? (Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0] : field.getType();
+            final Optional<String> childFieldName = getFullFieldName(isSortSearch, path.subList(1, path.size()), childClazz, fieldFilter);
 
             if (!childFieldName.isPresent()) {
                 return Optional.empty();
@@ -226,9 +228,21 @@ public class PagedQuery<T> {
     }
 
     /**
-     * Gets the list of filter criteria based on which resources should be filtered.
+     * Adds a list of filter criteria to the existing ones.
+     *
+     * @param filters The list of filter criteria to be added.
+     */
+    public void addFilters(final List<FilterCriterion> filters) {
+        this.filters.addAll(filters);
+    }
+
+    /**
+     * Gets the list of filter criteria based on the resource which should be filtered.
      * <p>
-     * The internal fields names are the actual internal names used for filtering.
+     * Generates the internal field names for the filter criteria not having any.
+     * If the path is incorrect, the filter criterion is removed.
+     * <p>
+     * If a filter criterion doesn't have an external field name, it's not processed but directly added to the returned list even if the path is invalid.
      *
      * @param clazz       The class containing the fields.
      * @param fieldFilter The filter to determine whether the clazz contains a given field.
@@ -237,13 +251,19 @@ public class PagedQuery<T> {
     public List<FilterCriterion> getFiltersForClass(final Class<T> clazz, final FieldFilter fieldFilter) {
         final List<FilterCriterion> filtersForClass = new ArrayList<>();
 
-        for (final FilterCriterion filterCriterion : this.filters) {
-            final List<String> fieldPath = Arrays.asList(filterCriterion.getExternalFieldName().split("\\."));
-            PagedQuery.getFullFieldName(false, fieldPath, clazz, fieldFilter).ifPresent(fullFieldName -> {
-                filterCriterion.setInternalFieldName(fullFieldName);
-                filtersForClass.add(filterCriterion);
-            });
-        }
+        this.filters.stream()
+                .filter(filterCriterion -> filterCriterion.getExternalFieldName() != null)
+                .forEach(filterCriterion -> {
+                    final List<String> fieldPath = Arrays.asList(filterCriterion.getExternalFieldName().split("\\."));
+                    PagedQuery.getFullFieldName(false, fieldPath, clazz, fieldFilter).ifPresent(fullFieldName -> {
+                        filterCriterion.setInternalFieldName(fullFieldName);
+                        filtersForClass.add(filterCriterion);
+                    });
+                });
+
+        this.filters.stream()
+                .filter(filterCriterion -> filterCriterion.getExternalFieldName() == null && filterCriterion.getInternalFieldName() != null)
+                .forEach(filtersForClass::add);
 
         return filtersForClass;
     }
@@ -258,7 +278,7 @@ public class PagedQuery<T> {
             this.filters = Stream.of(filters.split(SPLIT_REGEX))
                     .map(FILTER_PATTERN::matcher)
                     .filter(Matcher::matches)
-                    .map(matcher -> new FilterCriterion(matcher.group("field"), matcher.group("field"),
+                    .map(matcher -> new FilterCriterion(null, matcher.group("field"),
                             matcher.group("singleoperator") != null
                                     ? FilterOperatorEnum.fromOperator(matcher.group("singleoperator")).orElse(null)
                                     : FilterOperatorEnum.fromOperator(matcher.group("arrayoperator")).orElse(null),
@@ -269,5 +289,4 @@ public class PagedQuery<T> {
             this.filters = new ArrayList<>();
         }
     }
-
 }

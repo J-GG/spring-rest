@@ -63,6 +63,13 @@ public enum FilterOperatorEnum {
     BOOL("bool", FilterOperatorExpectedValue.SINGLE),
 
     /**
+     * The 'empty' operator.
+     * <p>
+     * Filter based on whether the collection field is empty or not.
+     */
+    EMPTY("empty", FilterOperatorExpectedValue.SINGLE),
+
+    /**
      * The 'in' operator.
      * <p>
      * Filter based on whether the field contains any of the values.

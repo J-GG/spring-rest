@@ -53,6 +53,37 @@ public class FilterCriterion {
     }
 
     /**
+     * Constructor.
+     * <p>
+     *
+     * @param internalFieldName The field name used internally.
+     * @param operator          The operator.
+     * @param value             The single value.
+     */
+    public FilterCriterion(final String internalFieldName, final FilterOperatorEnum operator, final String value) {
+        this.internalFieldName = internalFieldName;
+        this.externalFieldName = null;
+        this.operator = operator;
+        this.value = value;
+        this.values = null;
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param internalFieldName The field name used externally.
+     * @param operator          The operator.
+     * @param values            The multiple values.
+     */
+    public FilterCriterion(final String internalFieldName, final FilterOperatorEnum operator, final String[] values) {
+        this.internalFieldName = internalFieldName;
+        this.externalFieldName = null;
+        this.operator = operator;
+        this.value = null;
+        this.values = values;
+    }
+
+    /**
      * Sets the field name used internally.
      *
      * @param internalFieldName The field name used internally.

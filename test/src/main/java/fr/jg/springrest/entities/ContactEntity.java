@@ -18,8 +18,8 @@ public class ContactEntity {
 
     private String lastName;
 
-    @OneToMany(mappedBy = "contact")
-    private List<CompanyEntity> company;
+    @ManyToMany(mappedBy = "contacts")
+    private List<CompanyEntity> companies;
 
     @OneToOne
     @JoinColumn(name = "address_id")
@@ -49,12 +49,12 @@ public class ContactEntity {
         this.lastName = lastName;
     }
 
-    public List<CompanyEntity> getCompany() {
-        return this.company;
+    public List<CompanyEntity> getCompanies() {
+        return this.companies;
     }
 
-    public void setCompany(final List<CompanyEntity> company) {
-        this.company = company;
+    public void setCompanies(final List<CompanyEntity> companies) {
+        this.companies = companies;
     }
 
     public AddressEntity getAddress() {

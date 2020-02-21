@@ -102,6 +102,10 @@ public class SpecificationFilter<T> implements Specification<T> {
                         return criteriaBuilder.isTrue(path);
                     } else if (this.filterCriterion.getOperator().equals(FilterOperatorEnum.BOOL) && this.filterCriterion.getValue().equals("false")) {
                         return criteriaBuilder.isFalse(path);
+                    } else if (this.filterCriterion.getOperator().equals(FilterOperatorEnum.EMPTY) && this.filterCriterion.getValue().equals("true")) {
+                        return criteriaBuilder.isEmpty(path);
+                    } else if (this.filterCriterion.getOperator().equals(FilterOperatorEnum.EMPTY) && this.filterCriterion.getValue().equals("false")) {
+                        return criteriaBuilder.isNotEmpty(path);
                     }
                 } else if (this.filterCriterion.getValues() != null) {
                     if (this.filterCriterion.getOperator().equals(FilterOperatorEnum.IN)) {

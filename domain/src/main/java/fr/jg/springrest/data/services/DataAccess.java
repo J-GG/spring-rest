@@ -92,7 +92,7 @@ public abstract class DataAccess<T, U, V, W> {
             throw new PagingException("page", page);
         }
 
-        return page - 1;
+        return page;
     }
 
     /**

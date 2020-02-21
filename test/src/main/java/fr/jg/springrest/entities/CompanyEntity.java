@@ -6,6 +6,7 @@ import org.hibernate.annotations.GenericGenerator;
 import javax.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -26,9 +27,9 @@ public class CompanyEntity {
 
     private Boolean isRun;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "contact_id", nullable = false)
-    private ContactEntity contact;
+    @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(name = "company_contact", joinColumns = {@JoinColumn(name = "company_id")}, inverseJoinColumns = {@JoinColumn(name = "contact_id")})
+    private List<ContactEntity> contacts;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -81,12 +82,12 @@ public class CompanyEntity {
         this.createdAt = createdAt;
     }
 
-    public ContactEntity getContact() {
-        return this.contact;
+    public List<ContactEntity> getContacts() {
+        return this.contacts;
     }
 
-    public void setContact(final ContactEntity contact) {
-        this.contact = contact;
+    public void setContacts(final List<ContactEntity> contacts) {
+        this.contacts = this.contacts;
     }
 
     public Boolean isRun() {

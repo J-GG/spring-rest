@@ -1,6 +1,5 @@
 package fr.jg.springrest.data.services;
 
-import fr.jg.springrest.data.enumerations.FilterOperatorEnum;
 import fr.jg.springrest.data.enumerations.SortingOrderEnum;
 import fr.jg.springrest.data.pojo.FilterCriterion;
 import fr.jg.springrest.data.pojo.PagedQuery;
@@ -79,12 +78,11 @@ public class SpecificationDataAccess<T, U, V extends JpaSpecificationExecutor<U>
         final Long perPage = this.getPerPage(pagedQuery);
 
         Specification<U> specification = null;
-        final List<FilterCriterion> filterCriterias = pagedQuery.getFiltersForClass(this.domainClass, this.fieldFilter);
-        for (final FilterCriterion filterCriterion : filterCriterias) {
+        final List<FilterCriterion> filterCriteria = pagedQuery.getFiltersForClass(this.domainClass, this.fieldFilter);
+        for (final FilterCriterion filterCriterion : filterCriteria) {
             final SpecificationFilter<U> specificationFilter = new SpecificationFilter<>(filterCriterion);
             specification = specification == null ? specificationFilter : specification.and(specificationFilter);
         }
-        specification = specification.and(new SpecificationFilter<>(new FilterCriterion("id", "id", FilterOperatorEnum.EQUAL, "567611e8-5c5e-4d91-84cf-a453cb691f78", null)));
 
         final Map<String, SortingOrderEnum> sortMap = pagedQuery.getSortForClass(this.domainClass, this.fieldFilter);
         final List<Sort.Order> orders = sortMap
@@ -98,7 +96,7 @@ public class SpecificationDataAccess<T, U, V extends JpaSpecificationExecutor<U>
                     }
                 }).collect(Collectors.toList());
 
-        final PageRequest pageRequest = PageRequest.of(Math.toIntExact(page), Math.toIntExact(perPage), Sort.by(orders));
+        final PageRequest pageRequest = PageRequest.of(Math.toIntExact(page - 1), Math.toIntExact(perPage), Sort.by(orders));
         final Page<U> entities = this.repository.findAll(specification, pageRequest);
 
         final List<T> domainObjects = this.mapResources(entities.getContent(), this.entityClass, this.domainClass);
