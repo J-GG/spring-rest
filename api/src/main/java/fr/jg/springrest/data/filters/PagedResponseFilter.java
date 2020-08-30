@@ -2,6 +2,7 @@ package fr.jg.springrest.data.filters;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.stereotype.Component;
 
@@ -18,29 +19,48 @@ import java.util.stream.Collectors;
  * A Filter intercepting the JSON response sent back to the client in order to only keep the requested fields.
  */
 @Component
-public class JsonFieldsFilter implements Filter {
+public class PagedResponseFilter implements Filter {
     @Override
     public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain filterChain) throws IOException, ServletException {
         final String fieldsParam = request.getParameter("fields");
+        final String groupByParam = request.getParameter("groupBy");
 
+        final Set<String> fields = new HashSet<>();
         if (fieldsParam != null) {
-            final BodyResponseWrapper capturingResponseWrapper = new BodyResponseWrapper((HttpServletResponse) response);
-            filterChain.doFilter(request, capturingResponseWrapper);
+            fields.addAll(Arrays.asList(fieldsParam.split(",")));
+        }
+        if (groupByParam != null) {
+            fields.addAll(Arrays.asList(groupByParam.split(",")));
+        }
 
-            final ObjectMapper mapper = new ObjectMapper();
-            final JsonNode root = mapper.readTree(capturingResponseWrapper.getCaptureAsString());
+        final BodyResponseWrapper capturingResponseWrapper = new BodyResponseWrapper((HttpServletResponse) response);
+        filterChain.doFilter(request, capturingResponseWrapper);
 
+        final ObjectMapper mapper = new ObjectMapper();
+        final JsonNode root = mapper.readTree(capturingResponseWrapper.getCaptureAsString());
+
+        final JsonNode newRoot = mapper.createArrayNode();
+        root.forEach(jsonNode -> {
+            if (jsonNode.has("aggregates") && jsonNode.has("resource")) {
+                final ObjectNode aggregates = (ObjectNode) jsonNode.get("aggregates");
+                final ObjectNode newJsonNode = (ObjectNode) jsonNode.get("resource");
+                newJsonNode.setAll(aggregates);
+                ((ArrayNode) newRoot).add(newJsonNode);
+                aggregates.fieldNames().forEachRemaining(fields::add);
+            }
+        });
+
+        if (fieldsParam != null || groupByParam != null) {
             if (response.getContentType() != null && response.getContentType().contains("application/json")
-                    && !(root.has("timestamp") && root.has("request") && root.has("response"))) {
+                    && !(newRoot.has("timestamp") && newRoot.has("request") && newRoot.has("response"))) {
 
-                final List<String> fields = Arrays.asList(fieldsParam.split(","));
                 final FieldNode fieldTree = new FieldNode(fields);
 
-                fieldTree.pruneJsonNode(root);
+                fieldTree.pruneJsonNode(newRoot);
             }
-            response.getWriter().write(mapper.writeValueAsString(root));
+            response.getWriter().write(mapper.writeValueAsString(newRoot));
         } else {
-            filterChain.doFilter(request, response);
+            response.getWriter().write(mapper.writeValueAsString(newRoot));
         }
     }
 
@@ -64,7 +84,7 @@ public class JsonFieldsFilter implements Filter {
          *
          * @param fields The list of fields which should be stored in the tree.
          */
-        public FieldNode(final List<String> fields) {
+        public FieldNode(final Set<String> fields) {
             this.name = "";
             this.children = new HashSet<>();
 

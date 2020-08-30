@@ -4,7 +4,6 @@ import fr.jg.springrest.data.enumerations.SortingOrderEnum;
 import fr.jg.springrest.data.pojo.FilterCriterion;
 import fr.jg.springrest.data.pojo.PagedQuery;
 import fr.jg.springrest.data.pojo.PagedResponse;
-import fr.jg.springrest.data.pojo.PutResponse;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -14,10 +13,12 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import javax.persistence.Id;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -28,22 +29,7 @@ import java.util.stream.Collectors;
  * @param <V> The repository.
  * @param <W> The mapper.
  */
-public class SpecificationDataAccess<T, U, V extends JpaSpecificationExecutor<U> & JpaRepository<U, UUID>, W> extends DataAccess<T, U, V, W> {
-
-    /**
-     * The class of the domain object.
-     */
-    private final Class<T> domainClass;
-
-    /**
-     * The class of the entity.
-     */
-    private final Class<U> entityClass;
-
-    /**
-     * The class of the mapper.
-     */
-    private final Class<W> mapperClass;
+public class SpecificationDataAccess<T, U, V extends JpaSpecificationExecutor<U> & JpaRepository<U, Object>, W> extends DataAccess<T, U, V, W> {
 
     /**
      * The repository.
@@ -57,19 +43,10 @@ public class SpecificationDataAccess<T, U, V extends JpaSpecificationExecutor<U>
     @Autowired
     private FieldFilter fieldFilter;
 
-    /**
-     * Constructor.
-     */
-    public SpecificationDataAccess() {
-        final Type[] types = ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments();
-        this.domainClass = (Class) types[0];
-        this.entityClass = (Class) types[1];
-        this.mapperClass = (Class) types[3];
-    }
-
     @Override
-    protected Class<W> getMapperClass() {
-        return this.mapperClass;
+    public Optional<T> get(final Object id) {
+        final Optional<U> optionalEntity = this.repository.findById(id);
+        return optionalEntity.map(entity -> this.mapEntityToDomainObject(entity, this.entityClass, this.domainClass));
     }
 
     @Override
@@ -106,7 +83,13 @@ public class SpecificationDataAccess<T, U, V extends JpaSpecificationExecutor<U>
     }
 
     @Override
-    public Optional<T> patch(final UUID id, final T domainObject) {
+    public T post(final T domainObject) {
+        final U entity = this.repository.save(this.mapDomainObjectToEntity(domainObject, this.domainClass, this.entityClass));
+        return this.mapEntityToDomainObject(entity, this.entityClass, this.domainClass);
+    }
+
+    @Override
+    public Optional<T> patch(final Object id, final T domainObject, final Object patch) {
         Optional<T> resource = Optional.empty();
         final Optional<U> optionalEntity = this.repository.findById(id);
         if (optionalEntity.isPresent()) {
@@ -139,7 +122,20 @@ public class SpecificationDataAccess<T, U, V extends JpaSpecificationExecutor<U>
     }
 
     @Override
-    public PutResponse<T> put(final UUID id, final T domainObject) {
-        return null;
+    public T put(final Object id, final T domainObject) {
+        final U entity = this.mapDomainObjectToEntity(domainObject, this.domainClass, this.entityClass);
+        Arrays.stream(entity.getClass().getDeclaredFields())
+                .filter(field -> field.getAnnotation(Id.class) != null)
+                .findFirst()
+                .ifPresent(field -> {
+                    try {
+                        field.setAccessible(true);
+                        field.set(entity, id);
+                    } catch (final IllegalAccessException e) {
+                        e.printStackTrace();
+                    }
+                });
+        final U savedEntity = this.repository.save(entity);
+        return this.mapEntityToDomainObject(savedEntity, this.entityClass, this.domainClass);
     }
 }

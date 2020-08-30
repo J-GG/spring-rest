@@ -41,6 +41,19 @@ public class PagedQuery<T> {
     private List<FilterCriterion> filters;
 
     /**
+     * The list of filter criteria to filter the list of resources.
+     */
+    private List<String> groupBy;
+
+    private List<String> sum;
+
+    private List<String> max;
+
+    private List<String> min;
+
+    private List<String> avg;
+
+    /**
      * The regex to split the filters on comma not within parenthesis.
      */
     private static final String SPLIT_REGEX = ",(?![^\\(\\[]*[\\]\\)])";
@@ -214,6 +227,50 @@ public class PagedQuery<T> {
         } else {
             this.sort = new LinkedHashMap<>();
         }
+    }
+
+
+    /**
+     * Sets the map of fields based on which the resources should be sorted out.
+     */
+    public void setGroupBy(final List<String> groupBy) {
+        this.groupBy = groupBy;
+    }
+
+    public List<String> getGroupBy() {
+        return groupBy;
+    }
+
+    public List<String> getSum() {
+        return sum;
+    }
+
+    public void setSum(List<String> sum) {
+        this.sum = sum;
+    }
+
+    public List<String> getMax() {
+        return max;
+    }
+
+    public void setMax(List<String> max) {
+        this.max = max;
+    }
+
+    public List<String> getMin() {
+        return min;
+    }
+
+    public void setMin(List<String> min) {
+        this.min = min;
+    }
+
+    public List<String> getAvg() {
+        return avg;
+    }
+
+    public void setAvg(List<String> avg) {
+        this.avg = avg;
     }
 
     /**

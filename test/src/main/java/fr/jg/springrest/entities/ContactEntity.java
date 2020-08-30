@@ -11,6 +11,7 @@ import java.util.UUID;
 public class ContactEntity {
 
     @Id
+    @GeneratedValue(generator = "uuid2")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID id;
 
@@ -21,7 +22,7 @@ public class ContactEntity {
     @ManyToMany(mappedBy = "contacts")
     private List<CompanyEntity> companies;
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "address_id")
     private AddressEntity address;
 

@@ -3,11 +3,15 @@ package fr.jg.springrest.data.services;
 import fr.jg.springrest.data.exceptions.*;
 import fr.jg.springrest.data.pojo.PagedQuery;
 import fr.jg.springrest.data.pojo.PagedResponse;
-import fr.jg.springrest.data.pojo.PutResponse;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -23,9 +27,42 @@ import java.util.stream.Stream;
 public abstract class DataAccess<T, U, V, W> {
 
     /**
+     * The class of the domain object.
+     */
+    protected final Class<T> domainClass;
+
+    /**
+     * The class of the entity.
+     */
+    protected final Class<U> entityClass;
+
+    /**
+     * The class of the mapper.
+     */
+    protected final Class<W> mapperClass;
+
+    /**
      * The mapper converting a domain object to an entity and vice-versa.
      */
     private W mapper;
+
+    /**
+     * Constructor.
+     */
+    public DataAccess() {
+        final Type[] types = ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments();
+        this.domainClass = (Class) types[0];
+        this.entityClass = (Class) types[1];
+        this.mapperClass = (Class) types[3];
+    }
+
+    /**
+     * Gets an optional resource matching the provided id.
+     *
+     * @param id The id of the looked up resource.
+     * @return An optional resource. Empty if it couldn't be found.
+     */
+    public abstract Optional<T> get(final Object id);
 
     /**
      * Gets a paginated response to the query.
@@ -35,16 +72,11 @@ public abstract class DataAccess<T, U, V, W> {
      */
     public abstract PagedResponse<T> get(final PagedQuery<T> pagedQuery);
 
-    public abstract Optional<T> patch(final UUID id, final T domainObject);
+    public abstract Optional<T> patch(final Object id, final T domainObject, Object patch);
 
-    public abstract PutResponse<T> put(final UUID id, final T domainObject);
+    public abstract T post(final T domainObject);
 
-    /**
-     * Gets the mapper class.
-     *
-     * @return The mapper class.
-     */
-    protected abstract Class<W> getMapperClass();
+    public abstract T put(final Object id, final T domainObject);
 
     /**
      * Gets an instance of the mapper.
@@ -54,11 +86,11 @@ public abstract class DataAccess<T, U, V, W> {
     private W getMapper() {
         if (this.mapper == null) {
             try {
-                this.mapper = (W) Stream.of(this.getMapperClass().getFields())
-                        .filter(field -> field.getType().equals(this.getMapperClass()))
+                this.mapper = (W) Stream.of(this.mapperClass.getFields())
+                        .filter(field -> field.getType().equals(this.mapperClass))
                         .findAny()
                         .orElseThrow(() -> {
-                            final NoMapperInstanceFoundException noMapperInstanceFoundException = new NoMapperInstanceFoundException(this.getMapperClass());
+                            final NoMapperInstanceFoundException noMapperInstanceFoundException = new NoMapperInstanceFoundException(this.mapperClass);
                             Logger.getLogger("DataAccess").log(Level.SEVERE,
                                     String.format("%s\nDetails: %s", noMapperInstanceFoundException.toString(), noMapperInstanceFoundException.getDetails())
                             );
@@ -66,7 +98,7 @@ public abstract class DataAccess<T, U, V, W> {
                         })
                         .get(null);
             } catch (final IllegalAccessException e) {
-                final MapperIllegalAccessException mapperIllegalAccessException = new MapperIllegalAccessException(e, this.getMapperClass());
+                final MapperIllegalAccessException mapperIllegalAccessException = new MapperIllegalAccessException(e, this.mapperClass);
                 Logger.getLogger("DataAccess").log(Level.SEVERE,
                         String.format("%s\nDetails: %s", mapperIllegalAccessException.toString(), mapperIllegalAccessException.getDetails())
                 );
@@ -122,7 +154,7 @@ public abstract class DataAccess<T, U, V, W> {
      * @return A mapped entity from the domain object.
      */
     protected T mapEntityToDomainObject(final U entity, final Class<U> entityClass, final Class<T> domainClass) {
-        return (T) this.mapResources(Arrays.asList(entity), entityClass, domainClass).get(0);
+        return (T) this.mapResources(Collections.singletonList(entity), entityClass, domainClass).get(0);
     }
 
     /**
@@ -134,7 +166,7 @@ public abstract class DataAccess<T, U, V, W> {
      * @return A mapped domain object from the entity.
      */
     protected U mapDomainObjectToEntity(final T domainObject, final Class<T> domainClass, final Class<U> entityClass) {
-        return (U) this.mapResources(Arrays.asList(domainObject), domainClass, entityClass).get(0);
+        return (U) this.mapResources(Collections.singletonList(domainObject), domainClass, entityClass).get(0);
     }
 
     /**
@@ -147,12 +179,12 @@ public abstract class DataAccess<T, U, V, W> {
      */
     protected List mapResources(final List<?> sourceObjects, final Class sourceClass, final Class targetClass) {
         final List resources = new ArrayList<>();
-        final Method mapMethod = Stream.of(this.getMapperClass().getMethods())
+        final Method mapMethod = Stream.of(this.mapperClass.getMethods())
                 .filter(method -> method.getReturnType().equals(targetClass))
                 .filter(method -> method.getParameterTypes() != null && method.getParameterCount() == 1 && method.getParameterTypes()[0].equals(sourceClass))
                 .findAny()
                 .orElseThrow(() -> {
-                    final NoMapMethodFoundException noMapMethodFoundException = new NoMapMethodFoundException(this.getMapperClass(), sourceClass, targetClass);
+                    final NoMapMethodFoundException noMapMethodFoundException = new NoMapMethodFoundException(this.mapperClass, sourceClass, targetClass);
                     Logger.getLogger("DataAccess").log(Level.SEVERE,
                             String.format("%s\nDetails: %s", noMapMethodFoundException.toString(), noMapMethodFoundException.getDetails())
                     );
@@ -163,13 +195,13 @@ public abstract class DataAccess<T, U, V, W> {
             try {
                 resources.add(mapMethod.invoke(this.getMapper(), resource));
             } catch (final IllegalAccessException e) {
-                final MapperIllegalAccessException mapperIllegalAccessException = new MapperIllegalAccessException(e, this.getMapperClass(), sourceClass, targetClass, mapMethod);
+                final MapperIllegalAccessException mapperIllegalAccessException = new MapperIllegalAccessException(e, this.mapperClass, sourceClass, targetClass, mapMethod);
                 Logger.getLogger("DataAccess").log(Level.SEVERE,
                         String.format("%s\nDetails: %s", mapperIllegalAccessException.toString(), mapperIllegalAccessException.getDetails())
                 );
                 throw mapperIllegalAccessException;
             } catch (final InvocationTargetException e) {
-                final MapInvocationTargetException mapInvocationTargetException = new MapInvocationTargetException(e, this.getMapperClass(), sourceClass, targetClass, mapMethod);
+                final MapInvocationTargetException mapInvocationTargetException = new MapInvocationTargetException(e, this.mapperClass, sourceClass, targetClass, mapMethod);
                 Logger.getLogger("DataAccess").log(Level.SEVERE,
                         String.format("%s\nDetails: %s", mapInvocationTargetException.toString(), mapInvocationTargetException.getDetails())
                 );

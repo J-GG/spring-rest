@@ -1,27 +1,29 @@
 package fr.jg.springrest.data.filters;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.catalina.connector.RequestFacade;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * A Filter intercepting a request containing the `per_page` query string parameter to modify its name.
  */
 @Component
-public class PerPageFilter implements Filter {
+public class PatchFilter implements Filter {
     @Override
     public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain filterChain) throws IOException, ServletException {
         final String perPageParam = request.getParameter("per_page");
 
-        if (perPageParam != null) {
-            final Map<String, String[]> extraParams = new TreeMap<>();
-            extraParams.put("perPage", new String[] {perPageParam});
-            final HttpServletRequest wrappedRequest = new ParameterMapRequestWrapper((HttpServletRequest) request, extraParams);
-            filterChain.doFilter(wrappedRequest, response);
+        if ("PATCH".equals(((RequestFacade) request).getMethod())) {
+            final BodyRequestWrapper bodyRequestWrapper = new BodyRequestWrapper((HttpServletRequest) request);
+            final ObjectMapper mapper = new ObjectMapper();
+            final JsonNode body = mapper.readTree(bodyRequestWrapper.getBody());
+            bodyRequestWrapper.setAttribute("PATCH", body);
+            filterChain.doFilter(bodyRequestWrapper, response);
         } else {
             filterChain.doFilter(request, response);
         }

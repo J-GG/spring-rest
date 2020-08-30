@@ -14,6 +14,7 @@ import java.util.UUID;
 public class CompanyEntity {
 
     @Id
+    @GeneratedValue(generator = "uuid2")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID id;
 
@@ -33,6 +34,15 @@ public class CompanyEntity {
 
     @CreationTimestamp
     private LocalDateTime createdAt;
+
+    public CompanyEntity() {
+
+    }
+
+    public CompanyEntity(final CompanyEntity companyEntity) {
+        this.id = companyEntity.id;
+        this.name = companyEntity.name;
+    }
 
     public UUID getId() {
         return this.id;

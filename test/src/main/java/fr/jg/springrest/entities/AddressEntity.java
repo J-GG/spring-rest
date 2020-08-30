@@ -2,10 +2,7 @@ package fr.jg.springrest.entities;
 
 import org.hibernate.annotations.GenericGenerator;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.UUID;
 
 @Entity
@@ -13,6 +10,7 @@ import java.util.UUID;
 public class AddressEntity {
 
     @Id
+    @GeneratedValue(generator = "uuid2")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID id;
 

@@ -1,68 +1,83 @@
 package fr.jg.springrest.data.filters;
 
-import javax.servlet.ServletOutputStream;
-import javax.servlet.WriteListener;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import javax.servlet.ReadListener;
+import javax.servlet.ServletInputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
+import java.io.*;
 
 /**
  * Class allowing to adapt the response body.
  */
-public class BodyResponseWrapper extends HttpServletResponseWrapper {
+public class BodyRequestWrapper extends HttpServletRequestWrapper {
+    private final String body;
 
-    private final ByteArrayOutputStream capture;
+    public BodyRequestWrapper(final HttpServletRequest request) throws IOException {
+        //So that other request method behave just like before
+        super(request);
 
-    private ServletOutputStream output;
-
-    public BodyResponseWrapper(final HttpServletResponse response) {
-        super(response);
-        this.capture = new ByteArrayOutputStream(response.getBufferSize());
+        final StringBuilder stringBuilder = new StringBuilder();
+        BufferedReader bufferedReader = null;
+        try {
+            final InputStream inputStream = request.getInputStream();
+            if (inputStream != null) {
+                bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+                final char[] charBuffer = new char[128];
+                int bytesRead = -1;
+                while ((bytesRead = bufferedReader.read(charBuffer)) > 0) {
+                    stringBuilder.append(charBuffer, 0, bytesRead);
+                }
+            } else {
+                stringBuilder.append("");
+            }
+        } catch (final IOException ex) {
+            throw ex;
+        } finally {
+            if (bufferedReader != null) {
+                try {
+                    bufferedReader.close();
+                } catch (final IOException ex) {
+                    throw ex;
+                }
+            }
+        }
+        //Store request pody content in 'body' variable
+        body = stringBuilder.toString();
     }
 
     @Override
-    public ServletOutputStream getOutputStream() {
-        if (this.output == null) {
-            this.output = new ServletOutputStream() {
-                @Override
-                public void write(final int b) {
-                    BodyResponseWrapper.this.capture.write(b);
-                }
+    public ServletInputStream getInputStream() throws IOException {
+        final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(body.getBytes());
+        final ServletInputStream servletInputStream = new ServletInputStream() {
+            @Override
+            public boolean isFinished() {
+                return false;
+            }
 
-                @Override
-                public void flush() throws IOException {
-                    BodyResponseWrapper.this.capture.flush();
-                }
+            @Override
+            public boolean isReady() {
+                return false;
+            }
 
-                @Override
-                public void close() throws IOException {
-                    BodyResponseWrapper.this.capture.close();
-                }
+            @Override
+            public void setReadListener(final ReadListener listener) {
 
-                @Override
-                public boolean isReady() {
-                    return false;
-                }
+            }
 
-                @Override
-                public void setWriteListener(final WriteListener arg0) {
-                }
-            };
-        }
-
-        return this.output;
+            public int read() throws IOException {
+                return byteArrayInputStream.read();
+            }
+        };
+        return servletInputStream;
     }
 
-    public byte[] getCaptureAsBytes() throws IOException {
-        if (this.output != null) {
-            this.output.close();
-        }
-
-        return this.capture.toByteArray();
+    @Override
+    public BufferedReader getReader() throws IOException {
+        return new BufferedReader(new InputStreamReader(this.getInputStream()));
     }
 
-    public String getCaptureAsString() throws IOException {
-        return new String(this.getCaptureAsBytes());
+    //Use this method to read the request body N times
+    public String getBody() {
+        return this.body;
     }
 }
